@@ -1,6 +1,6 @@
 ﻿# 🤖 KUKA Connect Three — Autonomous Game on KRC4
 
-> **Industrial robotics meets game AI.** A complete KUKA KRC4 application where a 6-axis industrial robot plays *Connect Three* — against a human or against itself — with modular KRL architecture, real-time kinematics, and a browser-based 3D digital twin.
+> **Industrial robotics meets game AI.** A complete KUKA KRC4 application where a 6-axis industrial robot plays *Connect Three* autonomously — modular KRL, real-world kinematics, three distinct game modes & AI. <br> *Schwerpunkt: KRL-Robotercode & Spielmodi — Simulation nur als leichtes Preview.*
 
 [![KUKA KRC4](https://img.shields.io/badge/KUKA-KRC4-orange?style=flat-square&logo=kuka)](https://www.kuka.com)
 [![KRL](https://img.shields.io/badge/Language-KRL-blue?style=flat-square)]()
@@ -23,7 +23,7 @@
 | **Motion Planning** | Collision-free `APPROACH_Z`, `SAFE_Z`, retract logic, posture-aware `FLIP_THRESHOLD_COL` for wrist singularity avoidance |
 | **System Architecture** | Layer model (Controller / Logic / Motion / Data), `PUBLIC` data separation, linker-safe modular design |
 | **AI / Game Theory** | 4-stage heuristic (win → block → center → fallback), gravity simulation, `CHECK_WINNER` in 4 directions |
-| **Digital Twin** | Flask + Three.js 3D simulation, REST API, real `KRL → Python` translation, motion-sequence playback |
+| **Simulation (Preview)** | Lightweight Flask + Three.js preview of the KRL logic — one image below, full code in `simulator/` |
 | **Quality & Safety** | T1/AUT validation, collision tuning, stress tests (5× RvR games), full documentation & presentation |
 
 ---
@@ -81,19 +81,25 @@ More field photos: [`assets/images/`](assets/images/) (IMG_*, PXL_*)
 
 ---
 
-## 🎮 The Game — Connect Three
+## 🎮 Spiel & Regelwerk — Fokus: Code & Modi
 
 Spec: [`AUFGABE.pdf`](docs/AUFGABE.pdf) / [`Lastenheft`](docs/2023-03-06-IRL-HeB-E-O-1-Lastenheft.pdf)
 
-- **Board:** 6 columns × 4 rows (horizontal physical board, vertical in spec)
-- **Goal:** First to get **3 in a row** — horizontal, vertical, or diagonal
-- **Gravity ON:** Stones fall to lowest free cell in column (Connect-4 physics)
-- **Gravity OFF:** Any cell freely selectable (`A–D` × `1–6`)
-- **Modes:**
-  1. **Human vs Human** — robot as dealer/cleaner
-  2. **Human vs Robot** — interactive with AI
-  3. **Robot vs Robot** — fully autonomous demo
-- **Materials:** 12 red + 12 blue pieces, 2 magazines, base-coordinated board
+- **Board:** 6 Spalten × 4 Reihen (6×4, horizontal; Spec zeigt vertikal) — 12 rote + 12 blaue Steine, 2 Magazine, Base-kalibriert (`BASE_DATA[14]`)
+- **Ziel:** Erster mit **3 in Reihe** gewinnt (horizontal, vertikal, diagonal, `CHECK_WINNER` prüft alle 4 Richtungen)
+- **Gravitation ON:** Stein fällt auf tiefste freie Zelle der Spalte (Connect-4-Physik, `GET_GRAVITY_ROW` scannt `4→1`)
+- **Gravitation OFF:** Freie Wahl `A–D` × `1–6` (`DIALOG_SELECT_ROW`)
+- **Smart Start:** `ASK_SKIP_SETUP` — sind die Lager voll? → Setup überspringen
+
+### Die drei Spielmodi — im KRL-Code (`krl/GAME_CTRL.src:31`)
+
+| Modus | `GameMode` | Wer zieht? | Robotik-Fokus | Code |
+|---|---|---|---|---|
+| **1 — Human vs Human** | `MODE_HVH = 0` | Mensch wählt Spalte (SmartPad `KrlDlg` 1–6, ggf. Zeile A–D) | Roboter als *Dealer*: nur `PERFORM_GAME_MOVE` + `CLEANUP_BOARD`, perfekt für Bahntests ohne KI | `GET_PLAYER_MOVE` → Human-Path → `DIALOG_SELECT_COLUMN` |
+| **2 — Human vs Robot** | `MODE_HVR = 1` | Mensch (Rot) vs KI (Blau) | **Interaktives Spielen:** `isRobotTurn` check → bei `CurrentPlayer==BLUE` → `GET_AI_MOVE` | `if (GameMode==HVR && CurrentPlayer==FALSE) isRobotTurn=TRUE` |
+| **3 — Robot vs Robot** | `MODE_RVR = 2` | KI vs KI, voll autonom | **Demo/Stress-Test:** Endlosschleife, `WAIT SEC 0.5` zum Zuschauen, `UsedRed/UsedBlue` Wrap-around `mod 12` | `if (GameMode==RVR) isRobotTurn=TRUE` → 5 Spiele am Stück validiert |
+
+> **Warum `INT` statt `BOOL` für `GameMode`?** (`krl/GAME_DATA.dat:17`) — `BOOL` erlaubte nur 2 Modi. `INT 0/1/2` machte `RvR` ohne Refactoring möglich. Kleines Detail, große Wirkung.
 
 ---
 
@@ -181,45 +187,32 @@ PLAY_GAME_LOOP: GET_PLAYER_MOVE → PERFORM_GAME_MOVE → UPDATE_BOARD → CHECK
 
 ---
 
-## 🖥️ Digital Twin — Flask + Three.js Simulator
+## 🖥️ Anhang: Simulation (leichtes Preview — nicht Fokus)
 
-A **1:1 Python translation** of the KRL logic (`simulator/game_logic.py`, `simulator/robot_motion.py`) with a `Three.js` 3D cell and `Flask` REST API. Perfect for testing logic without hardware and for portfolio demos.
+*Dieses Repo ist primär **KRL-Robotercode**. Die Simulation ist nur ein kleines Preview zum Testen der Logik ohne Hardware — ein Bild reicht.*
 
-### Quick Start
+<p align="center">
+  <img src="docs/images/robot_workspace.png" width="60%" alt="Simulator Preview — workspace & teach points" style="border:1px solid #E0E0E0; border-radius:8px;">
+</p>
+<p align="center"><em>Preview der 3D-Simulation (Three.js + Flask) — 1:1 Übersetzung von <code>CHECK_WINNER</code> & <code>GET_AI_MOVE</code> nach Python. Zum Ausprobieren:</em></p>
 
 ```bash
-# 1. Setup (Windows)
-python -m venv .venv
-.venv\Scripts\activate
-pip install -r requirements.txt   # flask, flask-cors, numpy
-
-# 2. Run
-python simulator/app.py
-# → http://localhost:5000
+python -m venv .venv; .venv\Scripts\activate; pip install -r requirements.txt; python simulator/app.py
+# → http://localhost:5000  (API: /api/game/state, /api/game/move, /api/game/ai-move)
 ```
 
-Or use the batch helpers from the original project (`setup_venv.bat` / `run_simulator.bat` pattern — see `requirements.txt`).
+<details><summary>Details: API & Frontend (für Interessierte)</summary>
 
-### API
-
-| Endpoint | Method | Description |
+| Endpoint | Method | Was |
 |---|---|---|
-| `/api/game/state` | GET | Full state: `board`, `current_player`, `game_over`, `winner`, `used_*` + positions |
-| `/api/game/reset` | POST | Reset board & robot |
-| `/api/game/config` | POST | `{mode: hvh|hvr|rvr, gravity: bool, starting_player: red|blue}` |
-| `/api/game/move` | POST | `{col, row?}` → `{success, row, col, motion, state}` |
-| `/api/game/ai-move` | POST | Triggers `GET_AI_MOVE` |
-| `/api/robot/positions` | GET | All `P_FIELD` / `P_STORE_*` / `XP_*` for visualization |
-| `/api/robot/setup` | POST | Full setup motion sequence |
+| `/api/game/state` | GET | Board + Spieler + Positionen |
+| `/api/game/move` | POST | `{col,row?}` → motion |
+| `/api/game/ai-move` | POST | `GET_AI_MOVE` |
+| `/api/robot/setup` | POST | Setup-Sequenz |
 
-### Frontend (`simulator/static/`)
+Frontend `simulator/static/` — `index.html` + `robot_renderer.js` (Three.js Arm, Playback 0.25–3×) + `main.js`. Diente zum Testen von `CHECK_WINNER` ohne den echten Arm zu bewegen.
 
-- `index.html` — controls (mode, gravity, start player), 2D board + 3D canvas
-- `js/robot_renderer.js` — Three.js arm + board + gripper animation, playback (play/pause, speed 0.25–3×)
-- `js/main.js` — game flow, API calls, 2D/3D sync
-- `css/style.css` — responsive layout
-
-> The simulator was key to **testing `CHECK_WINNER` and `GET_AI_MOVE` without moving the real arm** — a real-world CI pattern for robotics.
+</details>
 
 ---
 

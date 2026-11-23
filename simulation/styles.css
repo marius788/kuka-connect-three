@@ -1,0 +1,340 @@
+/* ============================================
+   KUKA Robot Simulation - Styles
+   Modern dark theme with glassmorphism
+   ============================================ */
+
+:root {
+    --bg-dark: #0a0a0f;
+    --bg-gradient: linear-gradient(135deg, #0a0a0f 0%, #1a1a2e 50%, #16213e 100%);
+    --glass-bg: rgba(255, 255, 255, 0.05);
+    --glass-border: rgba(255, 255, 255, 0.1);
+    --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+    
+    --accent-red: #ff4757;
+    --accent-red-glow: rgba(255, 71, 87, 0.4);
+    --accent-blue: #3742fa;
+    --accent-blue-glow: rgba(55, 66, 250, 0.4);
+    --accent-gold: #ffd700;
+    --accent-green: #2ed573;
+    
+    --text-primary: #ffffff;
+    --text-secondary: rgba(255, 255, 255, 0.7);
+    --text-muted: rgba(255, 255, 255, 0.4);
+    
+    --font-main: 'Segoe UI', 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: var(--font-main);
+    background: var(--bg-gradient);
+    color: var(--text-primary);
+    overflow: hidden;
+    min-height: 100vh;
+}
+
+#app {
+    width: 100vw;
+    height: 100vh;
+    position: relative;
+}
+
+#scene {
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+
+/* ============================================
+   Glass Panel Components
+   ============================================ */
+
+.glass-panel {
+    background: var(--glass-bg);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid var(--glass-border);
+    border-radius: 16px;
+    box-shadow: var(--glass-shadow);
+    padding: 24px;
+}
+
+.glass-panel.small {
+    padding: 12px 20px;
+    border-radius: 10px;
+}
+
+/* ============================================
+   UI Overlay Layout
+   ============================================ */
+
+#ui-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    display: flex;
+    flex-direction: column;
+    padding: 20px;
+}
+
+#ui-overlay > * {
+    pointer-events: auto;
+}
+
+/* Header */
+header.glass-panel {
+    align-self: center;
+    text-align: center;
+    margin-bottom: auto;
+}
+
+header h1 {
+    font-size: 1.8rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, var(--accent-gold), var(--accent-red));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 8px;
+}
+
+#status-text {
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+}
+
+/* Mode Selection */
+#mode-selection {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    min-width: 400px;
+    text-align: center;
+}
+
+#mode-selection h2 {
+    font-size: 1.3rem;
+    margin-bottom: 20px;
+    color: var(--text-secondary);
+}
+
+.button-group {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.mode-btn {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px 24px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--glass-border);
+    border-radius: 12px;
+    color: var(--text-primary);
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.mode-btn:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.2);
+    transform: translateX(8px);
+}
+
+.mode-btn.selected {
+    background: rgba(255, 215, 0, 0.15);
+    border-color: var(--accent-gold);
+    box-shadow: 0 0 20px rgba(255, 215, 0, 0.2);
+}
+
+.mode-btn .icon {
+    font-size: 1.5rem;
+}
+
+.options {
+    margin-bottom: 24px;
+}
+
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    color: var(--text-secondary);
+    cursor: pointer;
+}
+
+.checkbox-label input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    accent-color: var(--accent-green);
+}
+
+/* Buttons */
+.primary-btn, .secondary-btn {
+    padding: 14px 32px;
+    border: none;
+    border-radius: 10px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.primary-btn {
+    background: linear-gradient(135deg, var(--accent-gold), #ff9500);
+    color: #000;
+    box-shadow: 0 4px 20px rgba(255, 215, 0, 0.3);
+}
+
+.primary-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 25px rgba(255, 215, 0, 0.45);
+}
+
+.secondary-btn {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--text-primary);
+    border: 1px solid var(--glass-border);
+}
+
+.secondary-btn:hover {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+/* Game Controls */
+#game-controls {
+    position: absolute;
+    right: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+    min-width: 280px;
+    text-align: center;
+}
+
+#game-controls h2 {
+    font-size: 1.2rem;
+    margin-bottom: 20px;
+    padding: 10px;
+    border-radius: 8px;
+}
+
+#game-controls h2.red-turn {
+    background: var(--accent-red-glow);
+    color: var(--accent-red);
+}
+
+#game-controls h2.blue-turn {
+    background: var(--accent-blue-glow);
+    color: #5865f2;
+}
+
+.column-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 8px;
+    margin-bottom: 20px;
+}
+
+.col-btn {
+    aspect-ratio: 1;
+    border: 2px solid var(--glass-border);
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text-primary);
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.col-btn:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: var(--accent-gold);
+    transform: scale(1.1);
+}
+
+.col-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+/* Winner Panel */
+#winner-panel {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    min-width: 350px;
+    animation: popIn 0.5s ease;
+}
+
+@keyframes popIn {
+    0% { transform: translate(-50%, -50%) scale(0.8); opacity: 0; }
+    100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+}
+
+#winner-panel h2 {
+    font-size: 2rem;
+    margin-bottom: 24px;
+}
+
+#winner-panel h2.red-wins {
+    color: var(--accent-red);
+    text-shadow: 0 0 30px var(--accent-red-glow);
+}
+
+#winner-panel h2.blue-wins {
+    color: #5865f2;
+    text-shadow: 0 0 30px var(--accent-blue-glow);
+}
+
+#winner-panel h2.draw {
+    color: var(--accent-gold);
+}
+
+/* Camera Info */
+#camera-info {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    color: var(--text-muted);
+    font-size: 0.85rem;
+}
+
+/* Hidden State */
+.hidden {
+    display: none !important;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    #mode-selection {
+        min-width: 90%;
+        padding: 20px;
+    }
+    
+    #game-controls {
+        right: 10px;
+        min-width: 200px;
+    }
+    
+    .column-grid {
+        gap: 4px;
+    }
+}

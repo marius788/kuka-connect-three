@@ -1,0 +1,6 @@
+﻿&ACCESS RVP
+&REL 1
+DEFDAT GAME_CTRL PUBLIC
+; Diese Datei muss PUBLIC sein, damit die Funktionen in der SRC
+; global gefunden werden.
+ENDDAT

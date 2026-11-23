@@ -1,0 +1,574 @@
+﻿<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bachelor_Arbeit_KUKA_Connect_Three</title>
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({ startOnLoad: true, theme: 'neutral' });
+    </script>
+    <style>
+        body {
+            font-family: "Times New Roman", Times, serif;
+            line-height: 1.5;
+            /* Etwas kompakter */
+            color: #333;
+            max-width: 210mm;
+            margin: 0 auto;
+            padding: 15mm;
+            /* Weniger Padding */
+            background: white;
+        }
+
+        /* Typografie */
+        h1 {
+            font-family: Arial, sans-serif;
+            font-size: 24pt;
+            border-bottom: 2px solid black;
+            padding-bottom: 10px;
+            margin-bottom: 30px;
+        }
+
+        /* KAPITEL STARTEN IMMER AUF NEUER SEITE (Verhindert komische Umbrüche) */
+        h2 {
+            font-family: Arial, sans-serif;
+            font-size: 18pt;
+            margin-top: 0;
+            padding-top: 20px;
+            border-bottom: 1px solid #ccc;
+            page-break-before: always;
+            break-before: always;
+        }
+
+        /* Ausnahme: Erstes Kapitel nicht umbrechen */
+        h2#k1 {
+            page-break-before: avoid;
+            break-before: avoid;
+            margin-top: 40px;
+        }
+
+        h3 {
+            font-family: Arial, sans-serif;
+            font-size: 14pt;
+            margin-top: 20px;
+            color: #444;
+            page-break-after: avoid;
+        }
+
+        p {
+            margin-bottom: 10px;
+            text-align: justify;
+            widows: 3;
+            orphans: 3;
+        }
+
+        ul,
+        ol {
+            margin-bottom: 10px;
+        }
+
+        li {
+            margin-bottom: 5px;
+        }
+
+        /* Code Blöcke */
+        code {
+            font-family: "Consolas", "Courier New", monospace;
+            background-color: #f5f5f5;
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-size: 0.9em;
+        }
+
+        pre {
+            background-color: #f5f5f5;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+            page-break-inside: avoid;
+            break-inside: avoid;
+            font-size: 0.9em;
+        }
+
+        /* DIAGRAMM SAUBERKEIT */
+        .chart-container {
+            border: 1px solid #eee;
+            padding: 5px;
+            margin: 15px 0;
+            background: #fff;
+            /* Der Schlüssel gegen zerschnittene Bilder: */
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
+            display: block;
+            width: 100%;
+        }
+
+        .mermaid {
+            text-align: center;
+        }
+
+        /* Tabellen */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+            page-break-inside: avoid;
+        }
+
+        th,
+        td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #f2f2f2;
+            font-weight: bold;
+        }
+
+        /* Inhaltsverzeichnis */
+        .toc {
+            background: #fafafa;
+            padding: 20px;
+            border: 1px solid #eee;
+            margin-bottom: 40px;
+            page-break-after: always;
+        }
+
+        .toc h2 {
+            margin-top: 0;
+            border: none;
+            page-break-before: avoid;
+        }
+
+        .toc ul {
+            list-style-type: none;
+            padding-left: 0;
+        }
+
+        .toc li {
+            margin-bottom: 8px;
+        }
+
+        .toc a {
+            text-decoration: none;
+            color: #000;
+        }
+
+        @media print {
+            body {
+                max-width: 100%;
+                margin: 0;
+                padding: 15mm 15mm 15mm 20mm;
+                /* Standard Ränder für Bindung */
+            }
+
+            .no-print {
+                display: none;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="no-print"
+        style="background: #e2e3e5; border: 1px solid #d6d8db; color: #383d41; padding: 15px; margin-bottom: 20px; border-radius: 5px; font-family: sans-serif;">
+        <strong>Druck-Anleitung v3 (Optimiert):</strong>
+        Die Kapitel starten jetzt immer auf einer neuen Seite (Standard bei Bachelorarbeiten). Das löst meistens das
+        Problem der leeren Seiten dazwischen.<br>
+        1. STRG + P<br>
+        2. "Als PDF speichern"<br>
+        3. Falls Diagramme immer noch schneiden: In den Einstellungen "Skalierung" auf "Anpassen an Papierformat" oder
+        manuell auf "90%" stellen.
+    </div>
+
+    <h1>Analyse und Implementierung einer automatisierten "Connect Three" Anwendung auf einem KUKA KRC4 Industrieroboter
+    </h1>
+
+    <p>
+        <strong>Dokumentationstyp:</strong> Projektarbeit / Bachelor-Thesis<br>
+        <strong>Projekt:</strong> KUKA Connect Three (Roboter 4-Gewinnt)<br>
+        <strong>Datum:</strong> 10. Januar 2026<br>
+        <strong>Autor:</strong> EXPERT AGENT TEAM (Lead Architect & Dr. Documentation)
+    </p>
+
+    <div class="toc">
+        <h2>Inhaltsverzeichnis</h2>
+        <ul>
+            <li><a href="#k1">1. Einleitung und Aufgabenstellung</a></li>
+            <li><a href="#k2">2. Systemanalyse und Entwurf: Evolution der Architektur</a></li>
+            <li><a href="#k3">3. Implementierung und Detaillösungen</a></li>
+            <li><a href="#k4">4. Funktions- & Variablen-Referenz</a></li>
+            <li><a href="#k5">5. Qualitätssicherung und Tests</a></li>
+            <li><a href="#k6">6. Bedienungsanleitung</a></li>
+            <li><a href="#k7">7. Fazit und Ausblick</a></li>
+        </ul>
+    </div>
+
+    <h2 id="k1">1. Einleitung und Aufgabenstellung</h2>
+
+    <h3>1.1 Projektziel</h3>
+    <p>Ziel dieses Projektes war die Entwicklung einer robusten Softwarelösung für einen KUKA-Industrieroboter
+        (Steuerung KRC4), der in der Lage ist, das Spiel "Connect Three" (eine vereinfachte Variante von "4 Gewinnt" auf
+        einem 6x4-Raster) autonom gegen einen Menschen oder gegen sich selbst zu spielen. Das Projekt demonstriert die
+        Interaktion zwischen komplexer High-Level-Logik (KI, Spielregeln) und Low-Level-Hardwaresteuerung (Kinematik,
+        E/A-Signale).</p>
+
+    <h3>1.2 Anforderungen (Lastenheft)</h3>
+    <p>Gemäß dem Lastenheft ("2023-03-06-IRL-HeB-E-O-1") mussten folgende funktionale Anforderungen erfüllt werden:</p>
+    <ul>
+        <li><strong>Spielfeld:</strong> Ein horizontales 6x4-Raster mit physikalischen Magazinen für Rote und Blaue
+            Steine.</li>
+        <li><strong>Spielmodi:</strong> Drei Betriebsarten müssen unterstützt werden:
+            <ol>
+                <li>Mensch gegen Mensch (Roboter als reiner "Dealer")</li>
+                <li>Mensch gegen Roboter (Interaktives Spiel)</li>
+                <li>Roboter gegen Roboter (Autonome Demonstration)</li>
+            </ol>
+        </li>
+        <li><strong>Softwarequalität:</strong> Der Code muss modular, dokumentiert und robust gegen Fehlbedienung sein.
+        </li>
+    </ul>
+
+    <h2 id="k2">2. Systemanalyse und Entwurf: Evolution der Architektur</h2>
+
+    <h3>2.1 Von der Einzeldatei zur modularen Lösung</h3>
+    <p>In der frühen Entwicklungsphase wurde das Programm zunächst monolithisch strukturiert, um schnelle Funktionstests
+        zu ermöglichen (<code>GAME_LOGIC (1).src</code>). Mit steigender Komplexität – insbesondere durch die Einführung
+        der drei Spielmodi und der KI – zeigte sich jedoch, dass eine Modularisierung signifikante Vorteile für die
+        Stabilität und Wartbarkeit bietet.</p>
+
+    <p><strong>Vorteile der neuen Architektur:</strong></p>
+    <ol>
+        <li><strong>Kapselung (Separation of Concerns):</strong><br>
+            Die Trennung von Logik (<code>GAME_CTRL</code>) und Bewegung (<code>ROBOT_MOTION</code>) erlaubt es, die
+            Spielregeln zu testen, ohne den Roboter physisch zu bewegen (z.B. in der Simulation). Umgekehrt können
+            Bewegungen optimiert werden, ohne die Spiellogik zu gefährden.</li>
+        <li><strong>Vermeidung von Linker-Konflikten:</strong><br>
+            KRL (Kuka Robot Language) unterscheidet strikt zwischen lokalen und globalen Daten. Durch die Auslagerung
+            aller gemeinsam genutzten Variablen in eine zentrale <code>GAME_DATA.dat</code> mit dem Schlüsselwort
+            <code>PUBLIC</code> werden Zugriffskonflikte und "Declaration not found"-Fehler effektiv vermieden.
+            <pre><code>DEFDAT GAME_DATA PUBLIC
+   GLOBAL CONST INT MODE_RVR = 2 ; Zentral definierte Konstante
+   DECL GLOBAL INT Board[4,6]    ; Globales Spielfeld
+ENDDAT</code></pre>
+        </li>
+        <li><strong>Wiederverwendbarkeit:</strong><br>
+            Das Modul <code>ROBOT_MOTION</code> stellt generische Funktionen wie <code>PERFORM_GAME_MOVE</code> bereit,
+            die von allen drei Spielmodi gleichermaßen genutzt werden.</li>
+    </ol>
+
+    <h3>2.2 Entwurf der Schichten-Architektur (Layer Model)</h3>
+    <table>
+        <tr>
+            <th>Modul</th>
+            <th>Rolle</th>
+            <th>Verantwortung</th>
+        </tr>
+        <tr>
+            <td><strong>MAIN.src</strong></td>
+            <td>Controller</td>
+            <td><strong>State Machine.</strong> Verwaltet den Programmfluss, Initialisierung (Smart Start) und den
+                Replay-Loop.</td>
+        </tr>
+        <tr>
+            <td><strong>GAME_CTRL.src</strong></td>
+            <td>Model / Logic</td>
+            <td><strong>Regelwerk & KI.</strong> Enthält das virtuelle Spielbrett (<code>Board[,]</code>). Berechnet
+                Züge, prüft Gewinner.</td>
+        </tr>
+        <tr>
+            <td><strong>ROBOT_MOTION.src</strong></td>
+            <td>View / Hardware</td>
+            <td><strong>Aktorik.</strong> Setzt logische Befehle ("Setze Stein auf 2,3") in physische Bahnplanung um.
+            </td>
+        </tr>
+        <tr>
+            <td><strong>GAME_DATA.dat</strong></td>
+            <td>Database</td>
+            <td><strong>Globale Daten.</strong> Zentraler Speicher für Konstanten (<code>ROWS</code>,
+                <code>COLS</code>), Positionen und Zustände.</td>
+        </tr>
+    </table>
+
+    <h2 id="k3">3. Implementierung und Detaillösungen</h2>
+
+    <h3>3.1 Die Zentrale Steuerung (MAIN)</h3>
+    <p>Das Hauptprogramm implementiert eine robuste Schleife (<code>LOOP ... ENDLOOP</code>), die den Produktionszyklus
+        einer Roboterzelle simuliert.</p>
+    <p><strong>Implementierungs-Details:</strong><br>
+        Hier wird die Variable <code>GameMode</code> genutzt, um den Ablauf zu steuern. Durch die
+        <code>GLOBAL</code>-Deklaration in <code>GAME_DATA</code> ist sie hier sichtbar.</p>
+
+    <pre><code>IF firstRun == TRUE THEN
+   ; Kapselung: Main weiß nicht, WIE gefragt wird, nur DASS gefragt wird.
+   skipSetup = ASK_SKIP_SETUP() 
+   
+   IF skipSetup == FALSE THEN
+      ROBOT_MOTION_SETUP() ; Hardware-Aufruf
+   ENDIF
+ENDIF</code></pre>
+
+    <h4>Abbildung 1: Ablaufdiagramm Hauptprogramm (MAIN)</h4>
+    <div class="chart-container">
+        <div class="mermaid">
+            graph TD
+            Start(("Start")) --> Init["Hardware Init ROBOT_MOTION"]
+            Init --> CheckFirst{"Erster Start?"}
+            CheckFirst -- Ja --> DialogSetup["Dialog: Lager gefüllt?"]
+            DialogSetup -- Nein --> DoSetup["ROBOT_MOTION_SETUP"]
+            DialogSetup -- Ja --> LogStart
+            DoSetup --> LogStart["Markiere firstRun = FALSE"]
+            CheckFirst -- Nein --> SelectMode
+            LogStart --> SelectMode["SELECT_GAME_MODE"]
+
+            SelectMode --> GameLoop["PLAY_GAME_LOOP"]
+            GameLoop --> CheckWin{"Spiel Ende?"}
+            CheckWin -- Ja --> DialogReplay["Dialog: Replay?"]
+            DialogReplay -- Ja --> SelectMode
+            DialogReplay -- Nein --> End(("Ende"))
+        </div>
+    </div>
+
+    <h3>3.2 Die Spielmodi & KI-Logik (GAME_CTRL Deep Dive)</h3>
+    <p>Hier residiert die "Intelligenz". Wir haben die Boolesche Logik für den Spielmodus (<code>BOOL</code>) in eine
+        Integer-Logik (<code>INT</code>) überführt, um den RvR Modus zu ermöglichen.</p>
+
+    <h4>Der Entscheidungsprozess: Mensch vs. Maschine</h4>
+    <p>Bevor ein Zug ausgeführt werden kann, muss das System entscheiden, aus welcher Quelle der Zug stammt: Vom
+        Touchpad (Mensch) oder vom Algorithmus (KI). Diese Weiche (Router) ist in <code>GET_PLAYER_MOVE</code>
+        implementiert.</p>
+
+    <h4>Abbildung 2: Entscheidungslogik (GET_PLAYER_MOVE)</h4>
+    <div class="chart-container">
+        <div class="mermaid">
+            graph TD
+            Start(("Start")) --> CheckMode{"Ist Modus RvR?"}
+            CheckMode -- Ja --> SetRobot["Roboter ist dran"]
+            CheckMode -- Nein --> CheckTurn{"Ist Spieler-Farbe dran?"}
+
+            CheckTurn -- Ja --> HumanPath["Menschlicher Zug"]
+            CheckTurn -- Nein --> RobotPath["KI Zug (Gegner)"]
+
+            HumanPath --> Dialog["SmartPad Dialog: Spalte 1-6?"]
+            RobotPath --> AI_Algo["KI Berechung (GET_AI_MOVE)"]
+
+            Dialog --> Valid{"Eingabe Gültig?"}
+            AI_Algo --> CalcGrav["Schwerkraft Prüfung"]
+            Valid -- Nein --> ReturnErr["Fehler (0)"]
+            Valid -- Ja --> CalcGrav
+
+            CalcGrav --> Free{"Zeile Frei?"}
+            Free -- Ja --> ReturnRow["Return: Zeile & Spalte"]
+            Free -- Nein --> ReturnErr
+        </div>
+    </div>
+
+    <h4>Die KI-Heuristik (GET_AI_MOVE)</h4>
+    <p>Wenn die KI am Zug ist, prüft sie deterministisch Gewinn- und Verlustmöglichkeiten.</p>
+
+    <h4>Abbildung 3: KI-Entscheidungsbaum</h4>
+    <div class="chart-container">
+        <div class="mermaid">
+            graph TD
+            Input["Start: GET_AI_MOVE"] --> CalcWin["1. GEWINN-CHECK: Simuliere Stein in Sp 1..6"]
+            CalcWin --> IsWin{"4er Reihe?"}
+            IsWin -- Ja --> ReturnWin["RETURN: Spalte (Sieg)"]
+            IsWin -- Nein --> NextWin["Nächste Spalte"]
+            NextWin -- Alle geprüft --> CalcBlock["2. BLOCK-CHECK: Simuliere Gegner-Stein in Sp 1..6"]
+
+            CalcBlock --> IsLoose{"Gegner gewinnt?"}
+            IsLoose -- Ja --> ReturnBlock["RETURN: Spalte (Block)"]
+            IsLoose -- Nein --> NextBlock["Nächste Spalte"]
+
+            NextBlock -- Alle geprüft --> CheckCenter["3. STRATEGIE: Mitte"]
+            CheckCenter --> Is3Free{"Spalte 3 frei?"}
+            Is3Free -- Ja --> Return3["RETURN: 3"]
+            Is3Free -- Nein --> Is4Free{"Spalte 4 frei?"}
+            Is4Free -- Ja --> Return4["RETURN: 4"]
+            Is4Free -- Nein --> DoRandom["4. ZUFALL: Erste freie Spalte"]
+            DoRandom --> ReturnRand["RETURN: Spalte"]
+        </div>
+    </div>
+
+    <h4>Abbildung 4: Gewinn-Prüfung (CHECK_WINNER)</h4>
+    <div class="chart-container">
+        <div class="mermaid">
+            graph TD
+            StartCheck(("Start Check")) --> ScanHoriz["Scan: Horizontal"]
+            ScanHoriz --> FoundH{"3 Gleiche?"}
+            FoundH -- Ja --> Win["RETURN: TRUE"]
+            FoundH -- Nein --> ScanVert["Scan: Vertikal"]
+
+            ScanVert --> FoundV{"3 Gleiche?"}
+            FoundV -- Ja --> Win
+            FoundV -- Nein --> ScanDiag1["Scan: Diagonal /"]
+
+            ScanDiag1 --> FoundD1{"3 Gleiche?"}
+            FoundD1 -- Ja --> Win
+            FoundD1 -- Nein --> ScanDiag2["Scan: Diagonal \"]
+
+            ScanDiag2 --> FoundD2{"3 Gleiche?"}
+            FoundD2 -- Ja --> Win
+            FoundD2 -- Nein --> NoWin["RETURN: FALSE"]
+        </div>
+    </div>
+
+    <h3>3.3 Kinematik & Bahnplanung (ROBOT_MOTION)</h3>
+    <p>Dieses Modul übersetzt die abstrakte Anweisung <code>PERFORM_GAME_MOVE(row, col)</code> in reale Weltkoordinaten.
+        Es nutzt den Referenzpunkt <code>XP_FIELD_REF</code> und die Spaltenabstände <code>DX_COL</code> /
+        <code>DY_ROW</code>.</p>
+
+    <p><strong>Die Physische Ausführung (Der Frame-Trick visualisiert):</strong><br>
+        Der Ablauf eines Setzvorgangs ist komplex, da er die dynamische Umrechnung von E6POS (mit Status/Turn) zu FRAME
+        (ohne S/T) beinhaltet.</p>
+
+    <h4>Abbildung 5: Bewegungsablauf (PERFORM_GAME_MOVE)</h4>
+    <div class="chart-container">
+        <div class="mermaid">
+            graph TD
+            StartMove(("Start Move")) --> CalcPick["Berechne Lagerplatz (Next Stack)"]
+            CalcPick --> ApprPick["Anfahrt Vorhöhe Lager"]
+            ApprPick --> Grip["Greifen & Rausziehen"]
+
+            Grip --> CalcTarget["Berechne Ziel: P_FIELD[r,c]"]
+            CalcTarget --> FrameCast["FRAME TRICK: fMove = pTarget"]
+
+            FrameCast --> MoveHigh["PTP über Ziel (fMove + Z)"]
+            MoveHigh --> MoveLow["LIN zum Ziel (fMove)"]
+
+            MoveLow --> Open["Greifer AUF"]
+            Open --> Retreat["LIN Rückzug nach oben"]
+            Retreat --> EndMove(("Ende"))
+        </div>
+    </div>
+
+    <h4>Abbildung 6: Setup-Routine (ROBOT_MOTION_SETUP)</h4>
+    <div class="chart-container">
+        <div class="mermaid">
+            graph TD
+            Start(("SETUP")) --> LoopRed["Schleife ROT 1..12"]
+            LoopRed --> ApprRed["Anfahrt Magazin Rot"]
+            ApprRed --> GripRed["Greifer ZU"]
+
+            GripRed --> MoveStoreR["Fahre zu Lagerplatz Rot (r,c)"]
+            MoveStoreR --> ReleaseRed["Greifer AUF"]
+            ReleaseRed --> NextRed{"Alle 12?"}
+            NextRed -- Nein --> LoopRed
+            NextRed -- Ja --> LoopBlue["Schleife BLAU 1..12"]
+
+            LoopBlue --> ApprBlue["Anfahrt Magazin Blau"]
+            ApprBlue --> GripBlue["Greifer ZU"]
+            GripBlue --> MoveStoreB["Fahre zu Lagerplatz Blau (r,c)"]
+            MoveStoreB --> ReleaseBlue["Greifer AUF"]
+            ReleaseBlue --> NextBlue{"Alle 12?"}
+            NextBlue -- Nein --> LoopBlue
+            NextBlue -- Ja --> Home["PTP HOME"]
+        </div>
+    </div>
+
+    <h4>Abbildung 7: Aufräumen (CLEANUP_BOARD)</h4>
+    <div class="chart-container">
+        <div class="mermaid">
+            graph TD
+            StartClean(("Start")) --> ScanBoard["Scan Board 1..4, 1..6"]
+            ScanBoard --> StoneFound{"Stein da?"}
+            StoneFound -- Nein --> NextCell
+            StoneFound -- Ja --> Identify{"Farbe?"}
+
+            Identify -- Rot --> CalcStoreR["Ziel: Nächster freier Platz ROT"]
+            Identify -- Blau --> CalcStoreB["Ziel: Nächster freier Platz BLAU"]
+
+            CalcStoreR --> Pick["Holen vom Brett"]
+            CalcStoreB --> Pick
+            Pick --> Place["Ablegen im Lager"]
+            Place --> UpdateCount["Zähler + 1"]
+            UpdateCount --> CleanCell["Board[r,c] = 0"]
+            CleanCell --> NextCell
+
+            NextCell --> Done{"Fertig?"}
+            Done -- Nein --> ScanBoard
+            Done -- Ja --> EndClean(("Ende"))
+        </div>
+    </div>
+
+    <h3>3.4 Technischer Exkurs: Das "Status & Turn" Problem und die Lösung</h3>
+    <p>Eines der größten technischen Hindernisse war die Berechnung von Zielpunkten zur Laufzeit.</p>
+    <p><strong>Das Problem:</strong><br>
+        Eine KRL-Koordinate vom Typ <code>E6POS</code> enthält neben kartesischen Koordinaten (X, Y, Z) auch
+        Achskonfigurationsdaten (<code>S</code>tatus und <code>T</code>urn).</p>
+    <ul>
+        <li><strong>Status:</strong> Informationen über die Lage des TCP (z.B. Überkopfbereich).</li>
+        <li><strong>Turn:</strong> Vorzeichen der Achswinkel (z.B. Achse 4 bei +10° oder -350°).</li>
+    </ul>
+    <p>Berechnet man einen Punkt rein mathematisch (<code>pNeu.X = pAlt.X + 50</code>), bleiben S und T von
+        <code>pAlt</code> erhalten. Wenn <code>pNeu</code> eine andere Achsstellung erfordert, meldet die Steuerung:
+        <strong>"Position unerreichbar"</strong>.</p>
+
+    <p><strong>Die Lösung: Der "Frame-Trick"</strong><br>
+        Wir nutzen einen impliziten Cast auf den Datentyp <code>FRAME</code> (der S/T ignoriert).</p>
+
+    <pre><code>DECL E6POS pTarget
+DECL FRAME fMove
+
+; 1. Zielpunkt holen (hat noch alte S/T Werte vom Referenzpunkt)
+pTarget = P_FIELD[row,col]
+
+; 2. Der Cast auf FRAME entfernt S und T
+fMove = pTarget 
+
+; 3. PTP-Bewegung: Steuerung berechnet Achswinkel neu ("Shortest Way")
+PTP fMove</code></pre>
+
+    <h2 id="k4">4. Funktions- & Variablen-Referenz</h2>
+
+    <h3>4.1 Globale Variablen (GAME_DATA.dat)</h3>
+    <ul>
+        <li><strong><code>Board[4,6]</code> (INT):</strong> Das 2D-Array, das den Spielzustand speichert. 0=Leer, 1=Rot,
+            2=Blau.</li>
+        <li><strong><code>GameMode</code> (INT):</strong> Aktiver Modus. 0=HvH, 1=HvR, 2=RvR.</li>
+        <li><strong><code>UsedRed</code>, <code>UsedBlue</code> (INT):</strong> Zähler für verbrauchte Steine im Lager.
+        </li>
+    </ul>
+
+    <h3>4.2 Wichtige Funktionen</h3>
+    <p><strong>GAME_CTRL.src</strong></p>
+    <ul>
+        <li><strong><code>GET_AI_MOVE(myColor)</code>:</strong> Gibt die optimale Spalte (1-6) für die KI zurück.</li>
+        <li><strong><code>GET_GRAVITY_ROW(col)</code>:</strong> Simuliert Physik. Iteriert von unten nach oben.</li>
+    </ul>
+
+    <p><strong>ROBOT_MOTION.src</strong></p>
+    <ul>
+        <li><strong><code>PERFORM_GAME_MOVE(row, col, player)</code>:</strong> Der zentrale Bewegungsblock. Holt Stein
+            -> Frame-Trick -> Setzt Stein.</li>
+    </ul>
+
+    <h2 id="k5">5. Qualitätssicherung und Tests</h2>
+    <p>Validiert im Modus T1 (Handbetrieb) und AUT (Automatik).</p>
+    <p><strong>Testergebnisse:</strong></p>
+    <ul>
+        <li><strong>Kollisionsprüfung:</strong> Kritischer Punkt war das Eintauchen in die Magazine. Hier wurde der
+            Parameter <code>APP_Z</code> (Annäherungshöhe) auf 40.0mm justiert.</li>
+        <li><strong>Logik-Stress-Test:</strong> Im Modus "RvR" wurden 5 Spiele in Folge ohne Eingriff durchgeführt, was
+            die Stabilität der <code>UsedRed/UsedBlue</code> Zähler bewies.</li>
+    </ul>
+
+    <h2 id="k6">6. Bedienungsanleitung</h2>
+    <p><strong>Schritt 1:</strong> Programm <code>MAIN</code> anwählen und Start drücken.<br>
+        <strong>Schritt 2:</strong> Setup-Frage <em>"Sind die Lager voll?"</em> wahrheitsgemäß beantworten.<br>
+        <strong>Schritt 3:</strong> Modus wählen (Mensch, Roboter, Demo RvR).
+    </p>
+
+    <h2 id="k7">7. Fazit und Ausblick</h2>
+    <p>Das Projekt "KUKA Connect Three" erfüllt alle Anforderungen des Lastenhefts. Die modulare Architektur ermöglicht
+        eine einfache Wartung und Erweiterung, während der "Frame-Trick" eine robuste Bahnplanung sicherstellt. Das
+        System demonstriert eindrucksvoll das Zusammenspiel von High-Level-Algorithmen und Low-Level-Robotik.</p>
+
+</body>
+
+</html>

@@ -1,0 +1,8 @@
+﻿DEFDAT ROBOT_MOTION PUBLIC
+
+
+; --- POSTURE POINTS ---
+; WICHTIG: Dieser Punkt muss geteacht werden! (Hoch, mittig, Ellbogen oben)
+DECL GLOBAL E6POS XP_POSTURE_HIGH={X 150.0,Y 150.0,Z 250.0,A -105.0,B 85.0,C -15.0,S 2,T 10,E1 0.0,E2 0.0,E3 0.0,E4 0.0,E5 0.0,E6 0.0}
+
+ENDDAT

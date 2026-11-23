@@ -1,0 +1,377 @@
+﻿&ACCESS RVP
+&REL 1
+DEF ROBOT_MOTION( )
+   ; Leerer Rumpf
+END
+
+; ===========================================================
+; INIT: PUNKTE BERECHNEN (Wie INIT_GAME im alten Code)
+; ===========================================================
+GLOBAL DEF ROBOT_MOTION_INIT()
+   DECL INT r, c
+   DECL FRAME fTemp ; FRAME-Trick: Status & Turn loeschen
+   
+   BAS(#INITMOV,0)
+   BAS(#VEL_PTP, 100)
+   BAS(#ACC_PTP, 100)
+   $VEL.CP = 2.0 
+   $ADVANCE = 3 ; Vorlaufzeiger fuer fluessige Bahnplanung 
+   
+   $TOOL = TOOL_DATA[14]
+   $BASE = BASE_DATA[14]
+   
+   ; --- 1. Spielfeld (P_FIELD) ---
+   FOR r = 1 TO 4
+      FOR c = 1 TO 6
+         fTemp = XP_FIELD_REF
+         P_FIELD[r,c] = fTemp
+         P_FIELD[r,c].X = XP_FIELD_REF.X + (c - 1) * DX_COL
+         P_FIELD[r,c].Y = XP_FIELD_REF.Y + (4 - r) * DY_ROW 
+      ENDFOR
+   ENDFOR
+   
+   ; --- 2. Lager ROT (P_STORE_RED / ehemals P1_PICK) ---
+   FOR r = 1 TO 2
+      FOR c = 1 TO 6
+         fTemp = XP_REF_RED
+         P_STORE_RED[r,c] = fTemp
+         P_STORE_RED[r,c].X = XP_REF_RED.X + (c - 1) * DY_ROW
+         P_STORE_RED[r,c].Y = XP_REF_RED.Y + (2 - r) * DX_COL
+      ENDFOR
+   ENDFOR
+   
+   ; --- 3. Lager BLAU (P_STORE_BLUE / ehemals P2_PICK) ---
+   FOR r = 1 TO 2
+      FOR c = 1 TO 6
+         fTemp = XP_REF_BLUE
+         P_STORE_BLUE[r,c] = fTemp
+         P_STORE_BLUE[r,c].X = XP_REF_BLUE.X + (c - 1) * DY_ROW
+         P_STORE_BLUE[r,c].Y = XP_REF_BLUE.Y + (2 - r) * DX_COL
+      ENDFOR
+   ENDFOR
+   
+   SPTP XHOME
+END
+
+GLOBAL DEF ROBOT_MOTION_HOME()
+   SPTP XHOME
+END
+
+; ===========================================================
+; SETUP: STEINE VERTEILEN (Exakte Kopie von SETUP_GAME)
+; ===========================================================
+GLOBAL DEF ROBOT_MOTION_SETUP()
+   DECL INT r, c
+   DECL E6POS pTarget, pAbovePlace
+   DECL E6POS pApprPick
+   DECL FRAME fMove ; <--- WICHTIG: FRAME trick gegen Achsfehler
+   
+   ; Sicherstellen, dass Punkte berechnet sind
+   ROBOT_MOTION_INIT()
+
+   ; -------------------------------------------------------
+   ; TEIL 1: ROT (ehemals Spieler 1)
+   ; -------------------------------------------------------
+   
+   ; Anfahrtspunkte Magazin ROT berechnen
+   pApprPick = XP_MAG_RED
+   pApprPick.Z = XP_MAG_RED.Z + APP_Z
+   pApprPick.Y = XP_MAG_RED.Y - APP_DIST
+
+   FOR r = 1 TO 2
+      FOR c = 1 TO 6
+         
+         ; Anfahrt
+         fMove = pApprPick
+         SPTP fMove
+       
+         ; Holen von Magazin ROT
+         fMove = XP_MAG_RED
+         SLIN fMove 
+         GRIPPER_CLOSE()
+         WAIT SEC 0.5
+         fMove = pApprPick
+         SLIN fMove       
+         
+         ; Ablegen bei Lager ROT
+         pTarget = P_STORE_RED[r,c]
+         pAbovePlace = pTarget
+         pAbovePlace.Z = pTarget.Z + SAFE_Z
+         
+         fMove = pAbovePlace
+         SPTP fMove     
+         fMove = pTarget
+         SLIN fMove         
+         GRIPPER_OPEN()
+         WAIT SEC 0.2
+         fMove = pAbovePlace
+         SLIN fMove     
+      ENDFOR
+   ENDFOR
+
+   ; -------------------------------------------------------
+   ; TEIL 2: BLAU (ehemals Spieler 2)
+   ; -------------------------------------------------------
+   
+   ; Anfahrtspunkte Magazin BLAU berechnen
+   pApprPick = XP_MAG_BLUE
+   pApprPick.Z = XP_MAG_BLUE.Z + APP_Z
+   pApprPick.Y = XP_MAG_BLUE.Y - APP_DIST
+
+   FOR r = 1 TO 2
+      FOR c = 1 TO 6
+         
+         ; Anfahrt
+         fMove = pApprPick
+         SPTP fMove
+         
+         ; Holen von Magazin BLAU
+         fMove = XP_MAG_BLUE
+         SLIN fMove
+         GRIPPER_CLOSE()
+         WAIT SEC 0.5
+         fMove = pApprPick
+         SLIN fMove
+         
+         ; Ablegen bei Lager BLAU
+         pTarget = P_STORE_BLUE[r,c]
+         pAbovePlace = pTarget
+         pAbovePlace.Z = pTarget.Z + SAFE_Z
+         
+         fMove = pAbovePlace
+         SPTP fMove
+         fMove = pTarget
+         SLIN fMove
+         GRIPPER_OPEN()
+         WAIT SEC 0.2
+         fMove = pAbovePlace
+         SLIN fMove
+      ENDFOR
+   ENDFOR
+   
+   SPTP XHOME
+END
+
+; ===========================================================
+; HAUPTBEWEGUNG IM SPIEL (Kopie von EXECUTE_MOVE)
+; ===========================================================
+GLOBAL DEF PERFORM_GAME_MOVE(row:IN, col:IN, player:IN)
+   DECL INT row, col, player
+   DECL E6POS pPick, pPlace, pHigh
+   DECL FRAME fHelp, fApproach ; FIX: Dynamische Anfahrt
+   DECL REAL APPROACH_Z
+   
+   APPROACH_Z = 200.0
+   
+   ; 1. PICK POSITION HOLEN
+   pPick = CALC_PICK_POS(player)
+
+   ; 2. PLACE POSITION HOLEN
+   pPlace = P_FIELD[row,col]
+   
+   ; --- A) STEIN HOLEN ---
+   
+   ; 1. Dynamische Anfahrt (FRAME Trick)
+   ; Wir fahren 200mm ueber das Ziel (relativ zur Base)
+   ; Der Roboter waehlt S/T selbst!
+   fApproach = pPick
+   fApproach.Z = pPick.Z + APPROACH_Z
+   SPTP fApproach
+
+   pHigh = pPick
+   pHigh.Z = pPick.Z + SAFE_Z
+   
+   fHelp = pHigh    ; Umwandlung in FRAME (loescht S/T)
+   SLIN fHelp        
+   
+   fHelp = pPick    
+   SLIN fHelp        
+   
+   GRIPPER_CLOSE()
+   WAIT SEC 0.5
+   
+   fHelp = pHigh
+   SLIN fHelp        
+   
+   ; --- B) STEIN BRINGEN ---
+   
+   ; 1. Dynamische Anfahrt ueber Ziel
+   fApproach = pPlace
+   fApproach.Z = pPlace.Z + APPROACH_Z
+   SPTP fApproach
+   
+   pHigh = pPlace
+   pHigh.Z = pPlace.Z + SAFE_Z
+   
+   ; 1. ZUR POSTURE FAHREN (Erzwingt richtige Achsstellung!)
+   ; SPTP XP_POSTURE_HIGH <- ENTFERNT
+
+   fHelp = pHigh    
+   
+   ; === FIX: Orientierung anpassen fuer hintere Reihen ===
+   IF (col >= FLIP_THRESHOLD_COL) THEN
+      IF fHelp.A < 0 THEN
+         fHelp.A = fHelp.A + 180.0
+      ELSE
+         fHelp.A = fHelp.A - 180.0
+      ENDIF
+   ENDIF
+   ; ======================================================
+   
+   SLIN fHelp ; War SPTP, jetzt SLIN fuer saubere Einfahrt von oben        
+   
+   fHelp = pPlace
+   
+   ; === FIX: Auch am Zielpunkt drehen ===
+   IF (col >= FLIP_THRESHOLD_COL) THEN
+      IF fHelp.A < 0 THEN
+         fHelp.A = fHelp.A + 180.0
+      ELSE
+         fHelp.A = fHelp.A - 180.0
+      ENDIF
+   ENDIF
+   ; ======================================
+   
+   SLIN fHelp        
+   
+   GRIPPER_OPEN()
+   WAIT SEC 0.2
+   
+   fHelp = pHigh
+   
+   ; === FIX: Auch beim Rausfahren gedreht bleiben ===
+   IF (col >= FLIP_THRESHOLD_COL) THEN
+      IF fHelp.A < 0 THEN
+         fHelp.A = fHelp.A + 180.0
+      ELSE
+         fHelp.A = fHelp.A - 180.0
+      ENDIF
+   ENDIF
+   ; =================================================
+   
+   SLIN fHelp        
+   
+   SPTP XHOME
+END
+
+; ===========================================================
+; HELFER: Pick Position (Endlos-Lager Fix)
+; ===========================================================
+DEFFCT E6POS CALC_PICK_POS(player:IN)
+   DECL INT player, idx, r_idx, c_idx, rawCount
+   DECL E6POS p
+   
+   IF player == PLAYER_RED THEN
+      UsedRed = UsedRed + 1
+      rawCount = UsedRed
+   ELSE
+      UsedBlue = UsedBlue + 1
+      rawCount = UsedBlue
+   ENDIF
+
+   ; Refill Logic
+   IF rawCount > 12 THEN
+       rawCount = 1 
+       IF player == PLAYER_RED THEN
+          UsedRed = 1
+       ELSE
+          UsedBlue = 1
+       ENDIF
+   ENDIF
+   
+   idx = rawCount - 1
+   r_idx = idx / 6 + 1          
+   c_idx = (idx - (idx / 6) * 6) + 1 
+   
+   IF player == PLAYER_RED THEN
+      p = P_STORE_RED[r_idx, c_idx]
+   ELSE
+      p = P_STORE_BLUE[r_idx, c_idx]
+   ENDIF
+   RETURN p
+ENDFCT
+
+; ===========================================================
+; AUFRÄUMEN (Kopie von CLEANUP_GAME)
+; ===========================================================
+GLOBAL DEF CLEANUP_BOARD()
+   DECL INT r, c, val, idx, r_idx, c_idx
+   DECL INT cP1, cP2
+   DECL E6POS pPick, pPlace, pAbove
+   DECL FRAME fHelp ; <--- WICHTIG: FRAME trick
+   
+   ; (Hinweis: MSG_NOTIFY hier entfernt, damit keine Abhängigkeiten entstehen)
+   cP1 = 1
+   cP2 = 1
+   SPTP XHOME
+   
+   FOR r = 1 TO 4
+      FOR c = 1 TO 6
+         val = Board[r,c]
+         
+         IF val > 0 THEN
+            pPick = P_FIELD[r,c]
+            
+            ; Zielberechnung
+            IF val == PLAYER_RED THEN
+               idx = cP1 - 1
+               r_idx = idx / 6 + 1
+               c_idx = (idx - (idx / 6) * 6) + 1 
+               pPlace = P_STORE_RED[r_idx, c_idx]
+               cP1 = cP1 + 1
+            ELSE
+               idx = cP2 - 1
+               r_idx = idx / 6 + 1
+               c_idx = (idx - (idx / 6) * 6) + 1 
+               pPlace = P_STORE_BLUE[r_idx, c_idx]
+               cP2 = cP2 + 1
+            ENDIF
+            
+            ; Holen (Vom Brett)
+            pAbove = pPick
+            pAbove.Z = pPick.Z + SAFE_Z
+            
+            fHelp = pAbove
+            SPTP fHelp
+            fHelp = pPick
+            SLIN fHelp
+            GRIPPER_CLOSE()
+            WAIT SEC 0.5
+            fHelp = pAbove
+            SLIN fHelp
+            
+            ; Bringen (Ins Lager)
+            pAbove = pPlace
+            pAbove.Z = pPlace.Z + SAFE_Z
+            
+            fHelp = pAbove
+            SPTP fHelp
+            fHelp = pPlace
+            SLIN fHelp 
+            GRIPPER_OPEN()
+            WAIT SEC 0.2
+            fHelp = pAbove
+            SLIN fHelp 
+            
+            Board[r,c] = 0
+         ENDIF
+      ENDFOR
+   ENDFOR
+   
+   UsedRed = 0
+   UsedBlue = 0
+   SPTP XHOME
+END
+
+; ===========================================================
+; GREIFER
+; ===========================================================
+DEF GRIPPER_OPEN()
+   $OUT[OUT_CLOSE] = FALSE
+   $OUT[OUT_OPEN]  = TRUE
+END
+
+DEF GRIPPER_CLOSE()
+   $OUT[OUT_OPEN]  = FALSE
+   $OUT[OUT_CLOSE] = TRUE
+END

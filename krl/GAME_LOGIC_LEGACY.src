@@ -1,0 +1,551 @@
+&ACCESS RVP
+&REL 24
+&PARAM DISKPATH = KRC:\R1\Program\3_gewinnt_5
+DEF GAME_LOGIC()
+   INIT() 
+   $BASE = BASE_DATA[14]   
+   $TOOL = TOOL_DATA[14]
+   INIT_GAME()
+   SELECT_MODES()
+   
+   ; HAUPTSPIEL AKTIV
+
+   
+   PTP XHOME
+   
+   ; SETUP DEAKTIVIERT (Nur bei Bedarf einkommentieren)
+   SETUP_GAME()
+   PLAY_GAME()
+END
+
+; ===========================================================
+; HAUPTSCHLEIFE
+; ===========================================================
+DEF PLAY_GAME()
+   DECL INT validMove
+   DECL INT targetRow, targetCol, stonesCount, playerInt
+   
+   stonesCount = 0
+   WinFlag = FALSE
+   
+   LOOP
+      REPEAT
+         validMove = GET_PLAYER_MOVE(targetRow, targetCol)
+         IF validMove == 99 THEN
+             MSG_NOTIFY("Spielabbruch!")
+             CLEANUP_GAME()
+             RETURN 
+         ENDIF
+         IF validMove == 0 THEN
+             MSG_NOTIFY("Ungueltiger Zug!")
+         ENDIF
+      UNTIL validMove == 1
+
+      EXECUTE_MOVE(targetRow, targetCol)
+
+      IF CurrentPlayer == TRUE THEN
+         playerInt = 1 
+      ELSE
+         playerInt = 2 
+      ENDIF
+      Board[targetRow, targetCol] = playerInt
+      stonesCount = stonesCount + 1
+
+      IF CHECK_WINNER(playerInt) == TRUE THEN
+          MSG_NOTIFY("GEWONNEN!")
+          WAIT SEC 2.0
+          CLEANUP_GAME()
+          RETURN
+      ENDIF
+      
+      IF stonesCount >= 24 THEN
+         MSG_NOTIFY("Unentschieden!")
+         CLEANUP_GAME()
+         RETURN
+      ENDIF
+
+      CurrentPlayer = NOT CurrentPlayer
+   ENDLOOP
+END
+
+; ===========================================================
+; BEWEGUNG (MIT FRAME FIX GEGEN ACHSFEHLER)
+; ===========================================================
+DEF EXECUTE_MOVE(r:IN, c:IN)
+   DECL INT r, c
+   DECL INT idx, r_idx, c_idx
+   DECL E6POS pPick, pPlace, pHigh
+   DECL FRAME fHelp ; <--- NEU: FRAME Hilfsvariable ohne Status/Turn
+   
+   ; 1. LAGER POSITION BERECHNEN
+   IF CurrentPlayer == TRUE THEN
+      UsedP1 = UsedP1 + 1
+      idx = UsedP1 - 1
+      r_idx = idx / 6 + 1
+      c_idx = (idx - (idx / 6) * 6) + 1 
+      pPick = P1_PICK[r_idx, c_idx] 
+   ELSE
+      UsedP2 = UsedP2 + 1
+      idx = UsedP2 - 1
+      r_idx = idx / 6 + 1
+      c_idx = (idx - (idx / 6) * 6) + 1 
+      pPick = P2_PICK[r_idx, c_idx] 
+   ENDIF
+
+   ; 2. ZIEL AUF BRETT
+   pPlace = P_FIELD[r,c]
+   
+   ; --- A) STEIN HOLEN (Lager -> Roboter sucht Weg selbst) ---
+   pHigh = pPick
+   pHigh.Z = pPick.Z + SAFE_Z
+   
+   fHelp = pHigh    ; Umwandlung in FRAME (löscht S/T)
+   PTP fHelp        ; Schnell drüber (Status egal)
+   
+   fHelp = pPick    ; Zielpunkt auch als FRAME
+   LIN fHelp        ; Senkrecht runter
+   
+   GRIPPER_CLOSE()
+   WAIT SEC 0.5
+   
+   fHelp = pHigh
+   LIN fHelp        ; Senkrecht hoch
+   
+   ; --- B) STEIN BRINGEN (Spielfeld -> Roboter sucht Weg selbst) ---
+   pHigh = pPlace
+   pHigh.Z = pPlace.Z + SAFE_Z
+   
+   fHelp = pHigh    ; Hier passierte der A1 Fehler vorher!
+   PTP fHelp        ; Jetzt ignoriert er den alten Turn-Wert
+   
+   fHelp = pPlace
+   LIN fHelp        ; Senkrecht runter
+   
+   GRIPPER_OPEN()
+   WAIT SEC 0.2
+   
+   fHelp = pHigh
+   LIN fHelp        ; Senkrecht hoch
+   
+   PTP XHOME
+END
+
+; ===========================================================
+; SETUP (LÄUFT BEREITS, ABER SICHERHEITSHALBER AUCH FIXEN)
+; ===========================================================
+DEF SETUP_GAME()
+   DECL INT r, c
+   DECL E6POS pTarget, pAbovePlace
+   DECL E6POS pApprPick
+   DECL FRAME fMove
+   
+   ; -------------------------------------------------------
+   ; TEIL 1: SPIELER 1 FUELLEN (Aus Magazin 1 - XP_GENERAL_PICK)
+   ; -------------------------------------------------------
+   
+   ; Anfahrtspunkte Magazin 1 berechnen
+   pApprPick = XP_GENERAL_PICK
+   pApprPick.Z = XP_GENERAL_PICK.Z + APP_Z
+   pApprPick.Y = XP_GENERAL_PICK.Y - APP_DIST
+
+   FOR r = 1 TO 2
+      FOR c = 1 TO 6
+         
+         fMove = pApprPick
+         PTP fMove
+       
+         
+         ; Holen von Magazin 1
+         fMove = XP_GENERAL_PICK
+         LIN fMove 
+         GRIPPER_CLOSE()
+         WAIT SEC 0.5
+         fMove = pApprPick
+         LIN fMove       
+         
+         ; Ablegen bei Spieler 1
+         pTarget = P1_PICK[r,c]
+         pAbovePlace = pTarget
+         pAbovePlace.Z = pTarget.Z + SAFE_Z
+         
+         fMove = pAbovePlace
+         PTP fMove     
+         fMove = pTarget
+         LIN fMove         
+         GRIPPER_OPEN()
+         WAIT SEC 0.2
+         fMove = pAbovePlace
+         LIN fMove     
+      ENDFOR
+   ENDFOR
+
+   ; -------------------------------------------------------
+   ; TEIL 2: SPIELER 2 FUELLEN (Aus Magazin 2 - XP_GENERAL_PICK_2)
+   ; -------------------------------------------------------
+   
+   ; Anfahrtspunkte Magazin 2 berechnen (NEU!)
+   pApprPick = XP_GENERAL_PICK_2
+   pApprPick.Z = XP_GENERAL_PICK_2.Z + APP_Z
+   pApprPick.Y = XP_GENERAL_PICK_2.Y - APP_DIST
+
+   FOR r = 1 TO 2
+      FOR c = 1 TO 6
+         
+         fMove = pApprPick
+         PTP fMove
+         
+         ; Holen von Magazin 2
+         fMove = XP_GENERAL_PICK_2
+         LIN fMove
+         GRIPPER_CLOSE()
+         WAIT SEC 0.5
+         fMove = pApprPick
+         LIN fMove
+         
+         ; Ablegen bei Spieler 2
+         pTarget = P2_PICK[r,c]
+         pAbovePlace = pTarget
+         pAbovePlace.Z = pTarget.Z + SAFE_Z
+         
+         fMove = pAbovePlace
+         PTP fMove
+         fMove = pTarget
+         LIN fMove
+         GRIPPER_OPEN()
+         WAIT SEC 0.2
+         fMove = pAbovePlace
+         LIN fMove
+      ENDFOR
+   ENDFOR
+   
+   PTP XHOME
+END
+; ===========================================================
+; CLEANUP (MIT FRAME FIX)
+; ===========================================================
+DEF CLEANUP_GAME()
+   DECL INT r, c, val, countP1, countP2
+   DECL INT idx, r_idx, c_idx
+   DECL E6POS pPick, pPlace, pAbove, pAppr
+   DECL FRAME fHelp ; <--- NEU
+   
+   MSG_NOTIFY("Aufraeumen...")
+   countP1 = 1
+   countP2 = 1
+   PTP XHOME
+   
+   FOR r = 1 TO 4
+      FOR c = 1 TO 6
+         val = Board[r,c]
+         
+         IF val > 0 THEN
+            pPick = P_FIELD[r,c]
+            
+            IF val == 1 THEN
+               idx = countP1 - 1
+               r_idx = idx / 6 + 1
+               c_idx = (idx - (idx / 6) * 6) + 1 
+               pPlace = P1_PICK[r_idx, c_idx]
+               countP1 = countP1 + 1
+            ELSE
+               idx = countP2 - 1
+               r_idx = idx / 6 + 1
+               c_idx = (idx - (idx / 6) * 6) + 1 
+               pPlace = P2_PICK[r_idx, c_idx]
+               countP2 = countP2 + 1
+            ENDIF
+            
+            ; Holen (Senkrecht vom Brett)
+            pAbove = pPick
+            pAbove.Z = pPick.Z + SAFE_Z
+            
+            fHelp = pAbove
+            PTP fHelp
+            fHelp = pPick
+            LIN fHelp
+            GRIPPER_CLOSE()
+            WAIT SEC 0.5
+            fHelp = pAbove
+            LIN fHelp
+            
+            ; Bringen (Vertikal ins Lager)
+            pAbove = pPlace
+            pAbove.Z = pPlace.Z + SAFE_Z
+            
+            fHelp = pAbove
+            PTP fHelp
+            fHelp = pPlace
+            LIN fHelp 
+            GRIPPER_OPEN()
+            WAIT SEC 0.2
+            fHelp = pAbove
+            LIN fHelp 
+            
+            Board[r,c] = 0
+         ENDIF
+      ENDFOR
+   ENDFOR
+   UsedP1 = 0
+   UsedP2 = 0
+   PTP XHOME
+   MSG_NOTIFY("Fertig.")
+END
+
+; ===========================================================
+; GREIFER FUNKTIONEN (FORMELSAMMLUNG KONFORM)
+; ===========================================================
+DEF GRIPPER_OPEN()
+   $OUT[OUT_CLOSE] = FALSE
+   $OUT[OUT_OPEN]  = TRUE
+END
+
+DEF GRIPPER_CLOSE()
+   $OUT[OUT_OPEN]  = FALSE
+   $OUT[OUT_CLOSE] = TRUE
+END
+
+DEFFCT BOOL CHECK_WINNER(p:IN)
+   DECL INT p, r, c
+   FOR r = 1 TO 4
+      FOR c = 1 TO 4
+         IF (Board[r,c]==p) AND (Board[r,c+1]==p) AND (Board[r,c+2]==p) THEN
+            RETURN TRUE
+         ENDIF
+      ENDFOR
+   ENDFOR
+   FOR r = 1 TO 2
+      FOR c = 1 TO 6
+         IF (Board[r,c]==p) AND (Board[r+1,c]==p) AND (Board[r+2,c]==p) THEN
+            RETURN TRUE
+         ENDIF
+      ENDFOR
+   ENDFOR
+   FOR r = 1 TO 2
+      FOR c = 1 TO 4
+         IF (Board[r,c]==p) AND (Board[r+1,c+1]==p) AND (Board[r+2,c+2]==p) THEN
+            RETURN TRUE
+         ENDIF
+      ENDFOR
+   ENDFOR
+   FOR r = 3 TO 4
+      FOR c = 1 TO 4
+         IF (Board[r,c]==p) AND (Board[r-1,c+1]==p) AND (Board[r-2,c+2]==p) THEN
+            RETURN TRUE
+         ENDIF
+      ENDFOR
+   ENDFOR
+   RETURN FALSE
+ENDFCT
+
+DEFFCT INT GET_PLAYER_MOVE(tRow:OUT, tCol:OUT)
+   DECL INT tRow, tCol, colChoice, rowChoice, r
+   colChoice = DIALOG_SELECT_COLUMN()
+   IF colChoice == 99 THEN 
+      RETURN 99 
+   ENDIF
+   IF GravityMode == TRUE THEN
+      tRow = 0
+      FOR r = 4 TO 1 STEP -1
+         IF Board[r, colChoice] == 0 THEN
+            tRow = r
+            EXIT
+         ENDIF
+      ENDFOR
+      IF tRow == 0 THEN
+         RETURN 0 
+      ENDIF
+      tCol = colChoice
+      RETURN 1 
+   ELSE
+      tCol = colChoice
+      rowChoice = DIALOG_SELECT_ROW()
+      IF rowChoice == 99 THEN
+         RETURN 99 
+      ENDIF
+      tRow = rowChoice
+      IF Board[tRow, tCol] <> 0 THEN
+         RETURN 0 
+      ENDIF
+      RETURN 1 
+   ENDIF
+ENDFCT
+
+DEFFCT INT DIALOG_SELECT_COLUMN()
+   DECL KrlMsg_T myMsg
+   DECL KrlMsgPar_T myPar[3]
+   DECL KrlMsgDlgSK_T mySk[7]
+   DECL KrlMsgOpt_T myMsgOpt
+   DECL INT handle, answer, i
+   DECL BOOL present
+   
+   myMsgOpt = {VL_Stop TRUE, Clear_P_Reset TRUE, Log_To_DB FALSE}
+   FOR i=1 TO 3
+      myPar[i] = {Par_Type #EMPTY}
+   ENDFOR
+
+   IF CurrentPlayer == TRUE THEN
+      myMsg = {Modul[] "Game", Nr 1, Msg_txt[] "Spieler ROT: Spalte waehlen"}
+   ELSE
+      myMsg = {Modul[] "Game", Nr 2, Msg_txt[] "Spieler BLAU: Spalte waehlen"}
+   ENDIF
+
+   mySk[1] = {Sk_Type #VALUE, Sk_txt[] "1"}
+   mySk[2] = {Sk_Type #VALUE, Sk_txt[] "2"}
+   mySk[3] = {Sk_Type #VALUE, Sk_txt[] "3"}
+   mySk[4] = {Sk_Type #VALUE, Sk_txt[] "4"}
+   mySk[5] = {Sk_Type #VALUE, Sk_txt[] "5"}
+   mySk[6] = {Sk_Type #VALUE, Sk_txt[] "6"}
+   mySk[7] = {Sk_Type #VALUE, Sk_txt[] "ABBRUCH"}
+   handle = Set_KrlDlg(myMsg, myPar[], mySk[], myMsgOpt)
+   answer = 0
+   REPEAT
+      present = Exists_KrlDlg(handle, answer)
+      WAIT SEC 0.1
+   UNTIL NOT present
+   IF answer == 7 THEN
+      RETURN 99
+   ENDIF
+   RETURN answer
+ENDFCT
+
+DEFFCT INT DIALOG_SELECT_ROW()
+   DECL KrlMsg_T myMsg
+   DECL KrlMsgPar_T myPar[3]
+   DECL KrlMsgDlgSK_T mySk[7]
+   DECL KrlMsgOpt_T myMsgOpt
+   DECL INT handle, answer, i
+   DECL BOOL present
+   
+   myMsgOpt = {VL_Stop TRUE, Clear_P_Reset TRUE, Log_To_DB FALSE}
+   FOR i=1 TO 3
+      myPar[i] = {Par_Type #EMPTY}
+   ENDFOR
+
+   myMsg = {Modul[] "Game", Nr 3, Msg_txt[] "Bitte Zeile waehlen"}
+   mySk[1] = {Sk_Type #VALUE, Sk_txt[] "A"} 
+   mySk[2] = {Sk_Type #VALUE, Sk_txt[] "B"}
+   mySk[3] = {Sk_Type #VALUE, Sk_txt[] "C"}
+   mySk[4] = {Sk_Type #VALUE, Sk_txt[] "D"}
+   mySk[5] = {Sk_Type #EMPTY}
+   mySk[6] = {Sk_Type #EMPTY}
+   mySk[7] = {Sk_Type #VALUE, Sk_txt[] "ABBRUCH"}
+   handle = Set_KrlDlg(myMsg, myPar[], mySk[], myMsgOpt)
+   answer = 0
+   REPEAT
+      present = Exists_KrlDlg(handle, answer)
+      WAIT SEC 0.1
+   UNTIL NOT present
+   IF answer == 7 THEN
+      RETURN 99
+   ENDIF
+   RETURN answer
+ENDFCT
+
+DEF MSG_NOTIFY(txt[]:IN)
+   DECL CHAR txt[]
+   DECL KrlMsg_T myMsg
+   DECL KrlMsgPar_T myPar[3]
+   DECL KrlMsgOpt_T myMsgOpt
+   DECL INT handle
+   myMsg = {Modul[] "Game", Nr 99, Msg_txt[] " "}
+   myMsg.Msg_txt[] = txt[]
+   myMsgOpt = {VL_Stop FALSE, Clear_P_Reset TRUE, Log_To_DB FALSE}
+   handle = Set_KrlMsg(#NOTIFY, myMsg, myPar[], myMsgOpt)
+END
+
+DEF SELECT_MODES()
+   DECL KrlMsg_T myMsg
+   DECL KrlMsgPar_T myPar[3]
+   DECL KrlMsgDlgSK_T mySk[7]
+   DECL KrlMsgOpt_T myMsgOpt
+   DECL INT handle, answer, i
+   DECL BOOL present
+   
+   myMsgOpt = {VL_Stop TRUE, Clear_P_Reset TRUE, Log_To_DB FALSE}
+   FOR i=1 TO 3
+      myPar[i] = {Par_Type #EMPTY}
+   ENDFOR
+   myMsg = {Modul[] "Connect3", Nr 1, Msg_txt[] "Spielmodus: Human vs Human"}
+   mySk[1] = {Sk_Type #VALUE, Sk_txt[] "Start HvH"}
+   FOR i=2 TO 7
+      mySk[i] = {Sk_Type #EMPTY}
+   ENDFOR
+   handle = Set_KrlDlg(myMsg, myPar[], mySk[], myMsgOpt)
+   answer = 0
+   REPEAT
+      present = Exists_KrlDlg(handle, answer)
+      WAIT SEC 0.1
+   UNTIL NOT present
+   GameMode = FALSE 
+   myMsg.Msg_txt[] = "Schwerkraft aktivieren (Gravity)?"
+   mySk[1] = {Sk_Type #VALUE, Sk_txt[] "JA"}
+   mySk[2] = {Sk_Type #VALUE, Sk_txt[] "NEIN"}
+   handle = Set_KrlDlg(myMsg, myPar[], mySk[], myMsgOpt)
+   answer = 0
+   REPEAT
+      present = Exists_KrlDlg(handle, answer)
+      WAIT SEC 0.1
+   UNTIL NOT present
+   IF answer==1 THEN
+      GravityMode=TRUE
+   ELSE
+      GravityMode=FALSE
+   ENDIF
+   myMsg.Msg_txt[] = "Welche Farbe beginnt?"
+   mySk[1] = {Sk_Type #VALUE, Sk_txt[] "ROT (P1)"}
+   mySk[2] = {Sk_Type #VALUE, Sk_txt[] "BLAU (P2)"}
+   handle = Set_KrlDlg(myMsg, myPar[], mySk[], myMsgOpt)
+   answer = 0
+   REPEAT
+      present = Exists_KrlDlg(handle, answer)
+      WAIT SEC 0.1
+   UNTIL NOT present
+   IF answer==1 THEN
+      CurrentPlayer=TRUE
+   ELSE
+      CurrentPlayer=FALSE
+   ENDIF
+END
+
+DEF INIT_GAME()
+   DECL INT r, c
+   FOR r = 1 TO 4
+      FOR c = 1 TO 6
+         P_FIELD[r,c] = XXD1
+         P_FIELD[r,c].X = XXD1.X + (c - 1) * DX_COL
+         P_FIELD[r,c].Y = XXD1.Y + (4 - r) * DY_ROW 
+      ENDFOR
+   ENDFOR
+   FOR r = 1 TO 2
+      FOR c = 1 TO 6
+         P1_PICK[r,c] = XP_P1_REF
+         P1_PICK[r,c].X = XP_P1_REF.X + (c - 1) * DY_ROW
+         P1_PICK[r,c].Y = XP_P1_REF.Y + (2 - r) * DX_COL
+      ENDFOR
+   ENDFOR
+   FOR r = 1 TO 2
+      FOR c = 1 TO 6
+         P2_PICK[r,c] = XP_P2_REF
+         P2_PICK[r,c].X = XP_P2_REF.X + (c - 1) * DY_ROW
+         P2_PICK[r,c].Y = XP_P2_REF.Y + (2 - r) * DX_COL
+      ENDFOR
+   ENDFOR
+   UsedP1 = 0
+   UsedP2 = 0
+   WinFlag = FALSE
+   FOR r=1 TO 4
+      FOR c=1 TO 6
+         Board[r,c] = 0
+      ENDFOR
+   ENDFOR
+END
+
+DEF INIT()
+   BAS(#INITMOV,0)
+   BAS(#VEL_PTP, 50)
+   BAS(#ACC_PTP, 50)
+   $VEL.CP = 0.5 
+   $BASE = BASE_DATA[10]
+   $TOOL = TOOL_DATA[14]
+   PTP XHOME
+END

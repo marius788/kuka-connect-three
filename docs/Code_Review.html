@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Code_Review_KUKA_Connect_Three</title>
+    <style>
+        body {
+            font-family: "Times New Roman", Times, serif;
+            line-height: 1.5;
+            color: #333;
+            max-width: 210mm;
+            margin: 0 auto;
+            padding: 15mm;
+            background: white;
+        }
+
+        /* Typografie */
+        h1 {
+            font-family: Arial, sans-serif;
+            font-size: 24pt;
+            border-bottom: 2px solid black;
+            padding-bottom: 10px;
+            margin-bottom: 30px;
+        }
+
+        h2 {
+            font-family: Arial, sans-serif;
+            font-size: 18pt;
+            margin-top: 30px;
+            padding-top: 10px;
+            border-bottom: 1px solid #ccc;
+            page-break-after: avoid;
+        }
+
+        h3 {
+            font-family: Arial, sans-serif;
+            font-size: 14pt;
+            margin-top: 25px;
+            color: #444;
+            page-break-after: avoid;
+        }
+
+        h4 {
+            font-family: Arial, sans-serif;
+            font-size: 12pt;
+            margin-top: 20px;
+            font-weight: bold;
+            color: #555;
+        }
+
+        p {
+            margin-bottom: 10px;
+            text-align: justify;
+        }
+
+        ul,
+        ol {
+            margin-bottom: 10px;
+        }
+
+        li {
+            margin-bottom: 5px;
+        }
+
+        /* Code Blöcke */
+        code {
+            font-family: "Consolas", "Courier New", monospace;
+            background-color: #f5f5f5;
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-size: 0.9em;
+        }
+
+        pre {
+            background-color: #f5f5f5;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+            page-break-inside: avoid;
+            break-inside: avoid;
+            font-size: 0.9em;
+            overflow-x: auto;
+        }
+
+        /* Tabellen */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+            page-break-inside: avoid;
+        }
+
+        th,
+        td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #f2f2f2;
+            font-weight: bold;
+        }
+
+        /* Status Indikatoren (Manuell nachgebaut für Print) */
+        .status-green {
+            color: green;
+            font-weight: bold;
+        }
+
+        .status-yellow {
+            color: #d4a017;
+            font-weight: bold;
+        }
+
+        .status-red {
+            color: red;
+            font-weight: bold;
+        }
+
+        @media print {
+            body {
+                max-width: 100%;
+                margin: 0;
+                padding: 15mm 15mm 15mm 20mm;
+            }
+
+            .no-print {
+                display: none;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="no-print"
+        style="background: #e2e3e5; border: 1px solid #d6d8db; color: #383d41; padding: 15px; margin-bottom: 20px; border-radius: 5px; font-family: sans-serif;">
+        <strong>Druck-Anleitung:</strong> Drücke <code>STRG + P</code> und wähle "Als PDF speichern".
+    </div>
+
+    <h1>Code-Analyse & Review: KUKA Connect Three</h1>
+
+    <p>
+        <strong>Erstellt von:</strong> Expert Agent Team (Code Reviewer)<br>
+        <strong>Datum:</strong> 10. Januar 2026<br>
+        <strong>Version:</strong> 1.0 (Final)
+    </p>
+
+    <h2>1. Code-Health-Status</h2>
+
+    <table>
+        <tr>
+            <th>Kategorie</th>
+            <th>Status</th>
+            <th>Bewertung</th>
+        </tr>
+        <tr>
+            <td><strong>Syntax</strong></td>
+            <td><span class="status-green">🟢 OK</span></td>
+            <td>Keine offensichtlichen Syntaxfehler. Variablen-Deklarationen sind sauber (PUBLIC/GLOBAL).</td>
+        </tr>
+        <tr>
+            <td><strong>Logik</strong></td>
+            <td><span class="status-green">🟢 OK</span></td>
+            <td>Umstellung auf <code>INT</code>-Spielmodi wurde konsequent in <code>GAME_CTRL</code> und
+                <code>MAIN</code> umgesetzt.</td>
+        </tr>
+        <tr>
+            <td><strong>Struktur</strong></td>
+            <td><span class="status-green">🟢 OK</span></td>
+            <td>Modulare Trennung (MAIN, CTRL, MOTION, DATA) ist vorbildlich und verhindert Linker-Fehler.</td>
+        </tr>
+        <tr>
+            <td><strong>Sicherheit</strong></td>
+            <td><span class="status-yellow">🟡 Warnung</span></td>
+            <td>Greifer-Ansteuerung ist "blind" (keine Sensor-Rückführung).</td>
+        </tr>
+        <tr>
+            <td><strong>Performance</strong></td>
+            <td><span class="status-yellow">🟡 Mittel</span></td>
+            <td>Viele <code>WAIT SEC</code>-Befehle und Standard-PTP ohne Überschleifen.</td>
+        </tr>
+    </table>
+
+    <h2>2. Detaillierte Analyse & Verbesserungsvorschläge</h2>
+
+    <h3>A. Syntax & Logik-Check (Modus-Erweiterung)</h3>
+    <p>Die Umstellung von <code>BOOL GameMode</code> auf <code>INT</code> wurde korrekt durchgeführt.</p>
+    <ul>
+        <li><strong>Definition</strong>: In <code>GAME_DATA.dat</code> sind Konstanten (<code>MODE_HVH</code>,
+            <code>MODE_HVR</code>, <code>MODE_RVR</code>) sauber definiert.</li>
+        <li><strong>Verwendung</strong>: In <code>GAME_CTRL.src</code> (<code>GET_PLAYER_MOVE</code>) wird korrekt auf
+            <code>GameMode == MODE_RVR</code> geprüft.</li>
+        <li><strong>Dialog</strong>: <code>SELECT_GAME_MODE</code> gibt nun korrekt Werte 1, 2 oder 3 zurück, die auf
+            die Konstanten gemappt werden.</li>
+    </ul>
+
+    <p><strong>Snippet-Bestätigung (GAME_CTRL.src):</strong></p>
+    <pre><code>IF (GameMode == MODE_HVR) AND (CurrentPlayer == FALSE) THEN
+   isRobotTurn = TRUE
+ENDIF</code></pre>
+    <p><em>Alles korrekt.</em></p>
+
+    <h3>B. Optimierungspotenzial (Robotik & Motion)</h3>
+
+    <h4>1. Überschleifen ($APO)</h4>
+    <p>Derzeit nutzen Sie reine Genauhalt-Bewegungen (<code>PTP fMove</code>, <code>LIN fMove</code>). Das führt zu
+        einem "stotternden" Ablauf, da der Roboter an jedem Punkt kurz anhält (v = 0).</p>
+
+    <p><strong>Vorschlag:</strong> Verwenden Sie Überschleifen für die Anfahrtsbewegungen.</p>
+    <ul>
+        <li><strong>PTP</strong>: <code>$APO.CPTP = 50</code> (50% Überschleifen)</li>
+        <li><strong>LIN</strong>: <code>$APO.CDIS = 10</code> (10mm vor Ziel verrunden)</li>
+    </ul>
+
+    <p><strong>Code-Beispiel (ROBOT_MOTION.src):</strong></p>
+    <pre><code>; In ROBOT_MOTION_INIT einfuegen:
+$APO.CDIS = 20.0 ; mm
+$APO.CPTP = 50   ; %
+
+; Anwendung (z.B. PERFORM_GAME_MOVE):
+fHelp = pHigh
+PTP fHelp C_PTP ; <--- Schwungvolles Anfahren
+fHelp = pPick
+LIN fHelp ; <--- Letzter Punkt muss genau sein (kein C_DIS)!</code></pre>
+    <p><em>Risiko:</em> Im Magazin (<code>XP_MAG</code>) darf <strong>NICHT</strong> überschliffen werden, wenn der
+        Greifer in die Vorrichtung eintaucht, sonst droht Kollision. Nur "in der Luft" überschleifen!</p>
+
+    <h4>2. Logik-Trigger statt WAIT SEC</h4>
+    <p>Sie verwenden <code>WAIT SEC 0.5</code> nach dem Greifen. Das kostet Zykluszeit.<br>
+        <strong>Besser:</strong> Nutzen Sie Greifer-Sensoren (falls vorhanden), um direkt weiterzufahren, sobald der
+        Greifer "Zu" meldet.
+    </p>
+
+    <pre><code>; Statt:
+; WAIT SEC 0.5
+
+; Besser (wenn Sensoren auf EINGANG 33/34 liegen):
+; GRIPPER_CLOSE()
+; WAIT FOR $IN[34] ; Warten bis Sensor "Zu" signalisiert</code></pre>
+    <p><em>Falls keine Sensoren verbaut sind, ist <code>WAIT SEC</code> unumgänglich, kann aber oft auf 0.2s reduziert
+            werden.</em></p>
+
+    <h3>C. Lastdaten (Load Data) - Anti-Gravity Check</h3>
+    <p>Ihr Code setzt <code>$TOOL = TOOL_DATA[14]</code>. Aber das physikalische Gewicht (<code>LOAD_DATA</code>) fehlt.
+        Wenn der Roboter nicht weiß, dass er einen Greifer (und evtl. einen Stein) trägt, stimmt die Bahnplanung nicht
+        perfekt ("Overshoot" oder Zittern).</p>
+
+    <p><strong>To-Do für den User:</strong><br>
+        Setzen Sie die Lastdaten explizit vor der Bewegung.</p>
+
+    <pre><code>; Beispiel in ROBOT_MOTION_INIT:
+$LOAD.M = 1.5     ; Masse in kg
+$LOAD.CM = {X 0, Y 0, Z 50, A 0, B 0, C 0} ; Schwerpunkt
+; Oder wenn in Config.dat definiert:
+; BAS(#TOOL, 14) ; Setzt TOOL + LOAD, wenn korrekt konfiguriert.</code></pre>
+
+    <h3>D. Sicherheitshinweise ("Der Frame-Trick")</h3>
+    <p>Sie nutzen den Frame-Trick (<code>fMove = pTarget</code>), um Status/Turn zu löschen.<br>
+        <strong>Vorteil:</strong> Roboter findet den Weg selbst, keine "Unerreichbar" Fehler bei berechneten
+        Punkten.<br>
+        <strong>Risiko:</strong> Der Roboter könnte eine Achskonfiguration wählen, die Sie nicht erwarten (z.B.
+        Ellenbogen unten statt oben). Da das Spielbrett flach ist, ist das Risiko gering.<br>
+        <strong>Empfehlung:</strong> Testen Sie einmalig in T1 bei allen vier Ecken des Feldes, ob der Roboter
+        "umschlägt" (Achsen dreht). Falls ja, müssten Sie für extreme Positionen doch Status/Turn vorgeben.
+    </p>
+
+</body>
+
+</html>

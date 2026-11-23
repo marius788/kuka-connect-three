@@ -1,0 +1,103 @@
+﻿&ACCESS RVP
+&REL 1
+DEF MAIN( )
+   ; ===========================================================
+   ; MAIN PROGRAM V7-FINAL (SMART START)
+   ; ===========================================================
+   
+   DECL BOOL firstRun
+   DECL BOOL playAgain
+   DECL BOOL skipSetup ; <--- Neue Variable
+   
+   ; Initialisierung Hardware/Punkte
+   ROBOT_MOTION_INIT()
+   
+   firstRun = TRUE
+   
+   ; --- HAUPTSCHLEIFE ---
+   LOOP
+      
+      GAME_CTRL_INIT()
+      
+      ; --- A. BEIM ERSTEN START FRAGEN: SETUP NOETIG? ---
+      IF firstRun == TRUE THEN
+         
+         ; Frage den Benutzer: Liegen schon Steine da?
+         skipSetup = ASK_SKIP_SETUP()
+         
+         IF skipSetup == FALSE THEN
+            ; Wenn NEIN (Lager leer), dann Steine holen:
+            ROBOT_MOTION_SETUP() 
+         ELSE
+            ; Wenn JA, nur Nachricht ausgeben
+            MSG_NOTIFY("Setup uebersprungen. Start!")
+         ENDIF
+         
+         firstRun = FALSE 
+      ENDIF
+      
+      ; --- B. SPIELMODUS ---
+      SELECT_GAME_MODE()
+      
+      ; --- C. SPIELEN ---
+      PLAY_GAME_LOOP()
+      
+      ; --- D. WIEDERHOLEN? ---
+      playAgain = ASK_PLAY_AGAIN()
+      
+      IF playAgain == FALSE THEN
+         MSG_NOTIFY("Programm beendet.")
+         EXIT 
+      ENDIF
+      
+      ; Bei Wiederholung (Loop) bleibt firstRun = FALSE, 
+      ; also wird Setup und die Frage danach automatisch übersprungen.
+      
+   ENDLOOP
+END
+
+DEF PLAY_GAME_LOOP()
+   DECL INT moveResult
+   DECL INT targetRow, targetCol
+   DECL INT currentPlayerInt
+   
+   LOOP
+      REPEAT
+         moveResult = GET_PLAYER_MOVE(targetRow, targetCol)
+         
+         IF moveResult == 99 THEN
+             MSG_NOTIFY("Abbruch! Brett wird geraeumt.")
+             CLEANUP_BOARD() 
+             RETURN 
+         ENDIF
+         
+         IF moveResult == 0 THEN
+             MSG_NOTIFY("Ungueltig/Voll!")
+         ENDIF
+      UNTIL moveResult == 1
+
+      IF CurrentPlayer == TRUE THEN
+         currentPlayerInt = PLAYER_RED
+      ELSE
+         currentPlayerInt = PLAYER_BLUE
+      ENDIF
+      
+      PERFORM_GAME_MOVE(targetRow, targetCol, currentPlayerInt)
+      UPDATE_BOARD(targetRow, targetCol, currentPlayerInt)
+
+      IF CHECK_WINNER(currentPlayerInt) == TRUE THEN
+          MSG_NOTIFY("GEWONNEN!")
+          WAIT SEC 2.0
+          CLEANUP_BOARD() 
+          RETURN 
+      ENDIF
+      
+      IF (UsedRed + UsedBlue) >= (ROWS * COLS) THEN
+         MSG_NOTIFY("Unentschieden!")
+         CLEANUP_BOARD()
+         RETURN 
+      ENDIF
+
+      CurrentPlayer = NOT CurrentPlayer
+   ENDLOOP
+END

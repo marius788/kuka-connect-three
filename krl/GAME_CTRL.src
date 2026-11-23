@@ -1,0 +1,423 @@
+﻿&ACCESS RVP
+&REL 1
+DEF GAME_CTRL( )
+   ; Leer
+END
+
+GLOBAL DEF GAME_CTRL_INIT()
+   DECL INT r,c
+   
+   UsedRed = 0
+   UsedBlue = 0
+   WinFlag = FALSE
+   CurrentPlayer = TRUE ; Rot beginnt
+   
+   FOR r=1 TO ROWS
+      FOR c=1 TO COLS
+         Board[r,c] = PLAYER_NONE
+      ENDFOR
+   ENDFOR
+   
+   GravityMode = TRUE
+   GameMode = MODE_HVH
+END
+
+GLOBAL DEF UPDATE_BOARD(r:IN, c:IN, p:IN)
+   DECL INT r,c,p
+   Board[r,c] = p
+END
+
+; --- ZUG-LOGIK (JETZT MIT RVR SUPPORT) ---
+GLOBAL DEFFCT INT GET_PLAYER_MOVE(tRow:OUT, tCol:OUT)
+   DECL INT tRow, tCol, colChoice, rowChoice
+   DECL BOOL isRobotTurn
+   DECL INT myColorInt
+   
+   isRobotTurn = FALSE
+   
+   ; 1. Modus Pruefung
+   IF GameMode == MODE_RVR THEN
+      isRobotTurn = TRUE
+   ENDIF
+   
+   IF (GameMode == MODE_HVR) AND (CurrentPlayer == FALSE) THEN
+      isRobotTurn = TRUE
+   ENDIF
+   
+   ; 2. Entscheidung
+   IF isRobotTurn == TRUE THEN
+       
+       ; --- KI ZUG ---
+       IF CurrentPlayer == TRUE THEN
+          myColorInt = PLAYER_RED
+       ELSE
+          myColorInt = PLAYER_BLUE
+       ENDIF
+       
+       colChoice = GET_AI_MOVE(myColorInt)
+       
+       IF colChoice == 0 THEN
+          RETURN 0
+       ENDIF
+       
+       tRow = GET_GRAVITY_ROW(colChoice)
+       tCol = colChoice
+       
+       ; Im RvR Modus kurz warten zum Zuschauen
+       IF GameMode == MODE_RVR THEN
+          WAIT SEC 0.5
+       ENDIF
+       
+       RETURN 1
+       
+   ELSE
+       
+       ; --- MENSCH ZUG ---
+       colChoice = DIALOG_SELECT_COLUMN()
+       IF colChoice == 99 THEN 
+          RETURN 99 
+       ENDIF
+       
+       IF GravityMode == TRUE THEN
+          tRow = GET_GRAVITY_ROW(colChoice)
+          IF tRow == 0 THEN
+             RETURN 0 
+          ENDIF
+          tCol = colChoice
+          RETURN 1 
+       ELSE
+          tCol = colChoice
+          rowChoice = DIALOG_SELECT_ROW()
+          IF rowChoice == 99 THEN
+             RETURN 99 
+          ENDIF
+          tRow = rowChoice
+          IF Board[tRow, tCol] <> PLAYER_NONE THEN
+             RETURN 0 
+          ENDIF
+          RETURN 1 
+       ENDIF
+   ENDIF
+ENDFCT
+
+; --- KI BERECHNUNG ---
+DEFFCT INT GET_AI_MOVE(myColor:IN)
+   DECL INT myColor, oppColor, c, testRow
+   
+   IF myColor == PLAYER_RED THEN
+      oppColor = PLAYER_BLUE
+   ELSE
+      oppColor = PLAYER_RED
+   ENDIF
+   
+   MSG_NOTIFY("Roboter rechnet...")
+   
+   ; 1. Gewinnen
+   FOR c = 1 TO COLS
+      testRow = GET_GRAVITY_ROW(c)
+      IF testRow > 0 THEN
+         Board[testRow, c] = myColor 
+         IF CHECK_WINNER(myColor) == TRUE THEN
+            Board[testRow, c] = PLAYER_NONE 
+            RETURN c
+         ENDIF
+         Board[testRow, c] = PLAYER_NONE 
+      ENDIF
+   ENDFOR
+   
+   ; 2. Blocken
+   FOR c = 1 TO COLS
+      testRow = GET_GRAVITY_ROW(c)
+      IF testRow > 0 THEN
+         Board[testRow, c] = oppColor 
+         IF CHECK_WINNER(oppColor) == TRUE THEN
+            Board[testRow, c] = PLAYER_NONE
+            MSG_NOTIFY("Guter Versuch! Blockiert.")
+            RETURN c
+         ENDIF
+         Board[testRow, c] = PLAYER_NONE
+      ENDIF
+   ENDFOR
+   
+   ; 3. Strategie
+   IF GET_GRAVITY_ROW(3) > 0 THEN
+      RETURN 3
+   ENDIF
+   IF GET_GRAVITY_ROW(4) > 0 THEN
+      RETURN 4
+   ENDIF
+   
+   ; 4. Zufall
+   FOR c = 1 TO COLS
+      IF GET_GRAVITY_ROW(c) > 0 THEN
+         RETURN c
+      ENDIF
+   ENDFOR
+   RETURN 0 
+ENDFCT
+
+DEFFCT INT GET_GRAVITY_ROW(col:IN)
+   DECL INT col, r
+   FOR r = ROWS TO 1 STEP -1
+      IF Board[r, col] == PLAYER_NONE THEN
+         RETURN r
+      ENDIF
+   ENDFOR
+   RETURN 0 
+ENDFCT
+
+GLOBAL DEFFCT BOOL CHECK_WINNER(p:IN)
+   DECL INT p, r, c
+   FOR r = 1 TO 4
+      FOR c = 1 TO 4
+         IF (Board[r,c]==p) AND (Board[r,c+1]==p) AND (Board[r,c+2]==p) THEN
+            RETURN TRUE
+         ENDIF
+      ENDFOR
+   ENDFOR
+   FOR r = 1 TO 2
+      FOR c = 1 TO 6
+         IF (Board[r,c]==p) AND (Board[r+1,c]==p) AND (Board[r+2,c]==p) THEN
+            RETURN TRUE
+         ENDIF
+      ENDFOR
+   ENDFOR
+   FOR r = 3 TO 4
+      FOR c = 1 TO 4
+         IF (Board[r,c]==p) AND (Board[r-1,c+1]==p) AND (Board[r-2,c+2]==p) THEN
+            RETURN TRUE
+         ENDIF
+      ENDFOR
+   ENDFOR
+   FOR r = 1 TO 2
+      FOR c = 1 TO 4
+         IF (Board[r,c]==p) AND (Board[r+1,c+1]==p) AND (Board[r+2,c+2]==p) THEN
+            RETURN TRUE
+         ENDIF
+      ENDFOR
+   ENDFOR
+   RETURN FALSE
+ENDFCT
+
+; ===========================================================
+; DIALOGE (MIT TEXT-DISPLAY FIX)
+; ===========================================================
+
+GLOBAL DEF SELECT_GAME_MODE()
+   DECL KrlMsg_T myMsg
+   DECL KrlMsgPar_T myPar[3]
+   DECL KrlMsgDlgSK_T mySk[7]
+   DECL KrlMsgOpt_T myMsgOpt
+   DECL INT handle, answer, i
+   DECL BOOL present
+   
+   myMsgOpt = {VL_Stop TRUE, Clear_P_Reset TRUE, Log_To_DB FALSE}
+   FOR i=1 TO 3
+      myPar[i] = {Par_Type #EMPTY}
+   ENDFOR
+   
+   ; --- 1. MODUS (3 Optionen) ---
+   myMsg = {Modul[] "Connect3", Nr 1, Msg_txt[] "Bitte Spielmodus waehlen:   "}
+   mySk[1] = {Sk_Type #VALUE, Sk_txt[] "Mensch"}
+   mySk[2] = {Sk_Type #VALUE, Sk_txt[] "Roboter"}
+   mySk[3] = {Sk_Type #VALUE, Sk_txt[] "Demo RvR"}
+   
+   handle = Set_KrlDlg(myMsg, myPar[], mySk[], myMsgOpt)
+   answer = 0
+   REPEAT
+      present = Exists_KrlDlg(handle, answer)
+      WAIT SEC 0.1
+   UNTIL NOT present
+   
+   IF answer == 1 THEN
+      GameMode = MODE_HVH
+   ELSE
+      IF answer == 2 THEN
+         GameMode = MODE_HVR
+      ELSE
+         GameMode = MODE_RVR
+      ENDIF
+   ENDIF
+   
+   ; --- 2. SCHWERKRAFT (Leerzeichen angehaengt!) ---
+   myMsg.Msg_txt[] = "Schwerkraft aktivieren?       "
+   
+   mySk[1] = {Sk_Type #VALUE, Sk_txt[] " JA "}
+   mySk[2] = {Sk_Type #VALUE, Sk_txt[] " NEIN "}
+   mySk[3] = {Sk_Type #EMPTY}
+   
+   handle = Set_KrlDlg(myMsg, myPar[], mySk[], myMsgOpt)
+   answer = 0
+   REPEAT
+      present = Exists_KrlDlg(handle, answer)
+      WAIT SEC 0.1
+   UNTIL NOT present
+   IF answer==1 THEN
+      GravityMode=TRUE
+   ELSE
+      GravityMode=FALSE
+   ENDIF
+   
+   ; --- 3. START (Leerzeichen angehaengt!) ---
+   myMsg.Msg_txt[] = "Wer beginnt das Spiel?        "
+   
+   mySk[1] = {Sk_Type #VALUE, Sk_txt[] "ROT"}
+   mySk[2] = {Sk_Type #VALUE, Sk_txt[] "BLAU"}
+   handle = Set_KrlDlg(myMsg, myPar[], mySk[], myMsgOpt)
+   answer = 0
+   REPEAT
+      present = Exists_KrlDlg(handle, answer)
+      WAIT SEC 0.1
+   UNTIL NOT present
+   IF answer==1 THEN
+      CurrentPlayer=TRUE 
+   ELSE
+      CurrentPlayer=FALSE
+   ENDIF
+END
+
+DEFFCT INT DIALOG_SELECT_COLUMN()
+   DECL KrlMsg_T myMsg
+   DECL KrlMsgPar_T myPar[3]
+   DECL KrlMsgDlgSK_T mySk[7]
+   DECL KrlMsgOpt_T myMsgOpt
+   DECL INT handle, answer, i
+   DECL BOOL present
+   
+   myMsgOpt = {VL_Stop TRUE, Clear_P_Reset TRUE, Log_To_DB FALSE}
+   FOR i=1 TO 3
+      myPar[i] = {Par_Type #EMPTY}
+   ENDFOR
+
+   IF CurrentPlayer == TRUE THEN
+      myMsg = {Modul[] "Connect3", Nr 1, Msg_txt[] "ROT ist am Zug. Spalte?       "}
+   ELSE
+      myMsg = {Modul[] "Connect3", Nr 2, Msg_txt[] "BLAU ist am Zug. Spalte?      "}
+   ENDIF
+
+   mySk[1] = {Sk_Type #VALUE, Sk_txt[] " 1 "}
+   mySk[2] = {Sk_Type #VALUE, Sk_txt[] " 2 "}
+   mySk[3] = {Sk_Type #VALUE, Sk_txt[] " 3 "}
+   mySk[4] = {Sk_Type #VALUE, Sk_txt[] " 4 "}
+   mySk[5] = {Sk_Type #VALUE, Sk_txt[] " 5 "}
+   mySk[6] = {Sk_Type #VALUE, Sk_txt[] " 6 "}
+   mySk[7] = {Sk_Type #VALUE, Sk_txt[] "ABBRUCH"}
+   
+   handle = Set_KrlDlg(myMsg, myPar[], mySk[], myMsgOpt)
+   answer = 0
+   REPEAT
+      present = Exists_KrlDlg(handle, answer)
+      WAIT SEC 0.1
+   UNTIL NOT present
+   IF answer == 7 THEN
+      RETURN 99
+   ENDIF
+   RETURN answer
+ENDFCT
+
+DEFFCT INT DIALOG_SELECT_ROW()
+   DECL KrlMsg_T myMsg
+   DECL KrlMsgPar_T myPar[3]
+   DECL KrlMsgDlgSK_T mySk[7]
+   DECL KrlMsgOpt_T myMsgOpt
+   DECL INT handle, answer, i
+   DECL BOOL present
+   myMsgOpt = {VL_Stop TRUE, Clear_P_Reset TRUE, Log_To_DB FALSE}
+   FOR i=1 TO 3
+      myPar[i] = {Par_Type #EMPTY}
+   ENDFOR
+   myMsg = {Modul[] "Connect3", Nr 3, Msg_txt[] "Bitte Zeile waehlen:          "}
+   mySk[1] = {Sk_Type #VALUE, Sk_txt[] "A (1)"} 
+   mySk[2] = {Sk_Type #VALUE, Sk_txt[] "B (2)"}
+   mySk[3] = {Sk_Type #VALUE, Sk_txt[] "C (3)"}
+   mySk[4] = {Sk_Type #VALUE, Sk_txt[] "D (4)"}
+   mySk[5] = {Sk_Type #EMPTY}
+   mySk[6] = {Sk_Type #EMPTY}
+   mySk[7] = {Sk_Type #VALUE, Sk_txt[] "ABBRUCH"}
+   handle = Set_KrlDlg(myMsg, myPar[], mySk[], myMsgOpt)
+   answer = 0
+   REPEAT
+      present = Exists_KrlDlg(handle, answer)
+      WAIT SEC 0.1
+   UNTIL NOT present
+   IF answer == 7 THEN
+      RETURN 99
+   ENDIF
+   RETURN answer
+ENDFCT
+
+GLOBAL DEF MSG_NOTIFY(txt[]:IN)
+   DECL CHAR txt[]
+   DECL KrlMsg_T myMsg
+   DECL KrlMsgPar_T myPar[3]
+   DECL KrlMsgOpt_T myMsgOpt
+   DECL INT handle
+   myMsg = {Modul[] "Info", Nr 99, Msg_txt[] " "}
+   myMsg.Msg_txt[] = txt[]
+   myMsgOpt = {VL_Stop FALSE, Clear_P_Reset TRUE, Log_To_DB FALSE}
+   handle = Set_KrlMsg(#NOTIFY, myMsg, myPar[], myMsgOpt)
+END
+
+GLOBAL DEFFCT BOOL ASK_PLAY_AGAIN()
+   DECL KrlMsg_T myMsg
+   DECL KrlMsgPar_T myPar[3]
+   DECL KrlMsgDlgSK_T mySk[7]
+   DECL KrlMsgOpt_T myMsgOpt
+   DECL INT handle, answer, i
+   DECL BOOL present
+   
+   myMsgOpt = {VL_Stop TRUE, Clear_P_Reset TRUE, Log_To_DB FALSE}
+   FOR i=1 TO 3
+      myPar[i] = {Par_Type #EMPTY}
+   ENDFOR
+   
+   ; Leerzeichen fuer Display-Fix
+   myMsg = {Modul[] "Connect3", Nr 98, Msg_txt[] "Noch eine Runde spielen?      "}
+   mySk[1] = {Sk_Type #VALUE, Sk_txt[] " JA "}
+   mySk[2] = {Sk_Type #VALUE, Sk_txt[] " NEIN "}
+   
+   handle = Set_KrlDlg(myMsg, myPar[], mySk[], myMsgOpt)
+   answer = 0
+   REPEAT
+      present = Exists_KrlDlg(handle, answer)
+      WAIT SEC 0.1
+   UNTIL NOT present
+   
+   IF answer == 1 THEN
+      RETURN TRUE
+   ELSE
+      RETURN FALSE
+   ENDIF
+ENDFCT
+
+GLOBAL DEFFCT BOOL ASK_SKIP_SETUP()
+   DECL KrlMsg_T myMsg
+   DECL KrlMsgPar_T myPar[3]
+   DECL KrlMsgDlgSK_T mySk[7]
+   DECL KrlMsgOpt_T myMsgOpt
+   DECL INT handle, answer, i
+   DECL BOOL present
+   
+   myMsgOpt = {VL_Stop TRUE, Clear_P_Reset TRUE, Log_To_DB FALSE}
+   FOR i=1 TO 3
+      myPar[i] = {Par_Type #EMPTY}
+   ENDFOR
+   
+   ; Leerzeichen fuer Display-Fix
+   myMsg = {Modul[] "Connect3", Nr 97, Msg_txt[] "Sind die Lager voll?          "}
+   mySk[1] = {Sk_Type #VALUE, Sk_txt[] " JA "}
+   mySk[2] = {Sk_Type #VALUE, Sk_txt[] " NEIN "}
+   
+   handle = Set_KrlDlg(myMsg, myPar[], mySk[], myMsgOpt)
+   answer = 0
+   REPEAT
+      present = Exists_KrlDlg(handle, answer)
+      WAIT SEC 0.1
+   UNTIL NOT present
+   
+   IF answer == 1 THEN
+      RETURN TRUE
+   ELSE
+      RETURN FALSE
+   ENDIF
+ENDFCT

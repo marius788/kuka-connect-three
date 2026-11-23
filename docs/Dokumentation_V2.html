@@ -1,0 +1,1176 @@
+﻿<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KUKA Connect Three | Projektdokumentation</title>
+    <meta name="description"
+        content="Technische Dokumentation zur automatisierten Connect Three Anwendung auf einem KUKA KRC4 Industrieroboter">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({ startOnLoad: true, theme: 'neutral', fontFamily: 'Inter, sans-serif' });
+    </script>
+    <style>
+        /* ======================================
+           MCKINSEY/BCG CORPORATE DESIGN SYSTEM
+           ====================================== */
+
+        :root {
+            /* Primary Corporate Palette */
+            --primary-corporate: #051C2C;
+            --background-canvas: #FFFFFF;
+            --background-page: #F4F4F4;
+            --typography-main: #333333;
+            --accent-primary: #00A3E0;
+            --accent-secondary: #00599C;
+            --chart-bg: #F9FAFB;
+            --border-subtle: #E0E0E0;
+            --text-muted: #6B7280;
+            --text-light: #9CA3AF;
+
+            /* Spacing System */
+            --space-xs: 8px;
+            --space-sm: 16px;
+            --space-md: 24px;
+            --space-lg: 40px;
+            --space-xl: 64px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background-color: var(--background-page);
+            color: var(--typography-main);
+            line-height: 1.6;
+            font-size: 15px;
+            font-weight: 400;
+        }
+
+        /* ======================================
+           SLIDE CONTAINER (The "Folie")
+           ====================================== */
+
+        .slide-container {
+            max-width: 1400px;
+            margin: 40px auto;
+            background: var(--background-canvas);
+            box-shadow: 0 4px 24px rgba(5, 28, 44, 0.08), 0 1px 3px rgba(5, 28, 44, 0.04);
+        }
+
+        /* ======================================
+           HEADER
+           ====================================== */
+
+        header {
+            background: var(--primary-corporate);
+            padding: var(--space-md) var(--space-lg);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header-title {
+            color: #FFFFFF;
+            font-size: 18px;
+            font-weight: 600;
+            letter-spacing: -0.02em;
+        }
+
+        .header-meta {
+            color: var(--text-light);
+            font-size: 13px;
+            font-weight: 400;
+        }
+
+        /* ======================================
+           ACTION TITLE
+           ====================================== */
+
+        .action-title {
+            padding: var(--space-lg) var(--space-lg) var(--space-md);
+            border-bottom: 1px solid var(--border-subtle);
+        }
+
+        .action-title h1 {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--typography-main);
+            letter-spacing: -0.03em;
+            line-height: 1.2;
+            margin-bottom: var(--space-xs);
+        }
+
+        .action-title .subtitle {
+            font-size: 16px;
+            color: var(--text-muted);
+            font-weight: 400;
+        }
+
+        /* ======================================
+           CONTENT SECTIONS
+           ====================================== */
+
+        .content-section {
+            padding: var(--space-lg);
+            border-bottom: 1px solid var(--border-subtle);
+        }
+
+        .content-section:last-of-type {
+            border-bottom: none;
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: var(--space-md);
+            padding-bottom: var(--space-sm);
+            border-bottom: 2px solid var(--accent-primary);
+        }
+
+        .section-number {
+            color: var(--accent-primary);
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-right: var(--space-sm);
+        }
+
+        .section-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--typography-main);
+            letter-spacing: -0.02em;
+        }
+
+        h3 {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--typography-main);
+            margin-top: var(--space-md);
+            margin-bottom: var(--space-sm);
+        }
+
+        h4 {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-muted);
+            margin-top: var(--space-md);
+            margin-bottom: var(--space-sm);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        p {
+            margin-bottom: var(--space-sm);
+            text-align: left;
+        }
+
+        /* ======================================
+           CONTENT GRID
+           ====================================== */
+
+        .content-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: var(--space-lg);
+        }
+
+        .content-grid.three-col {
+            grid-template-columns: 1fr 1fr 1fr;
+        }
+
+        .content-grid.text-image {
+            grid-template-columns: 1.2fr 1fr;
+        }
+
+        .content-grid.image-text {
+            grid-template-columns: 1fr 1.2fr;
+        }
+
+        @media (max-width: 900px) {
+
+            .content-grid,
+            .content-grid.three-col,
+            .content-grid.text-image,
+            .content-grid.image-text {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* ======================================
+           LISTS (MECE STRUCTURE)
+           ====================================== */
+
+        ul,
+        ol {
+            margin-bottom: var(--space-sm);
+            padding-left: var(--space-md);
+        }
+
+        li {
+            margin-bottom: var(--space-xs);
+            line-height: 1.5;
+        }
+
+        li strong {
+            color: var(--typography-main);
+        }
+
+        /* ======================================
+           DATA BOXES & CHARTS
+           ====================================== */
+
+        .data-box {
+            background: var(--chart-bg);
+            border: 1px solid var(--border-subtle);
+            padding: var(--space-md);
+            margin: var(--space-sm) 0;
+        }
+
+        .data-box-title {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--accent-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: var(--space-sm);
+        }
+
+        /* ======================================
+           CODE BLOCKS
+           ====================================== */
+
+        code {
+            font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+            background: var(--chart-bg);
+            padding: 2px 6px;
+            font-size: 0.85em;
+            border: 1px solid var(--border-subtle);
+        }
+
+        pre {
+            background: var(--chart-bg);
+            border: 1px solid var(--border-subtle);
+            padding: var(--space-md);
+            overflow-x: auto;
+            font-size: 13px;
+            line-height: 1.5;
+            margin: var(--space-sm) 0;
+        }
+
+        pre code {
+            background: none;
+            padding: 0;
+            border: none;
+        }
+
+        /* ======================================
+           TABLES
+           ====================================== */
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: var(--space-sm) 0;
+            font-size: 14px;
+        }
+
+        th {
+            background: var(--primary-corporate);
+            color: #FFFFFF;
+            font-weight: 600;
+            text-align: left;
+            padding: var(--space-sm);
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        td {
+            padding: var(--space-sm);
+            border-bottom: 1px solid var(--border-subtle);
+            vertical-align: top;
+        }
+
+        tr:hover td {
+            background: var(--chart-bg);
+        }
+
+        /* ======================================
+           IMAGES (Sharp Edges - McKinsey Style)
+           ====================================== */
+
+        .image-container {
+            margin: var(--space-sm) 0;
+        }
+
+        .image-container img {
+            width: 100%;
+            height: auto;
+            display: block;
+            border: 1px solid var(--border-subtle);
+        }
+
+        .image-caption {
+            font-size: 12px;
+            color: var(--text-muted);
+            padding: var(--space-xs) 0;
+            font-style: italic;
+        }
+
+        .image-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: var(--space-md);
+            margin: var(--space-md) 0;
+        }
+
+        .image-grid.three-col {
+            grid-template-columns: repeat(3, 1fr);
+        }
+
+        /* ======================================
+           VIDEO SECTION
+           ====================================== */
+
+        .video-section {
+            background: var(--chart-bg);
+            border: 1px solid var(--border-subtle);
+            padding: var(--space-md);
+            margin: var(--space-md) 0;
+        }
+
+        .video-container {
+            position: relative;
+            width: 100%;
+            padding-bottom: 56.25%;
+            /* 16:9 Aspect Ratio */
+            height: 0;
+            overflow: hidden;
+        }
+
+        .video-container iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: 1px solid var(--border-subtle);
+        }
+
+        /* ======================================
+           MERMAID DIAGRAMS
+           ====================================== */
+
+        .chart-container {
+            background: var(--chart-bg);
+            border: 1px solid var(--border-subtle);
+            padding: var(--space-md);
+            margin: var(--space-md) 0;
+            overflow-x: auto;
+        }
+
+        .chart-title {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--accent-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: var(--space-sm);
+        }
+
+        .mermaid {
+            text-align: center;
+        }
+
+        /* ======================================
+           KEY INSIGHTS BOX
+           ====================================== */
+
+        .insight-box {
+            background: linear-gradient(135deg, var(--primary-corporate) 0%, #0A3A5C 100%);
+            color: #FFFFFF;
+            padding: var(--space-md);
+            margin: var(--space-md) 0;
+        }
+
+        .insight-box h4 {
+            color: var(--accent-primary);
+            margin-top: 0;
+        }
+
+        .insight-box p {
+            color: rgba(255, 255, 255, 0.9);
+            margin-bottom: 0;
+        }
+
+        /* ======================================
+           TOC
+           ====================================== */
+
+        .toc {
+            background: var(--chart-bg);
+            border: 1px solid var(--border-subtle);
+            padding: var(--space-md);
+        }
+
+        .toc-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--typography-main);
+            margin-bottom: var(--space-sm);
+            padding-bottom: var(--space-xs);
+            border-bottom: 2px solid var(--accent-primary);
+        }
+
+        .toc ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .toc li {
+            margin-bottom: var(--space-xs);
+        }
+
+        .toc a {
+            color: var(--typography-main);
+            text-decoration: none;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+        }
+
+        .toc a:hover {
+            color: var(--accent-primary);
+        }
+
+        .toc a::before {
+            content: '';
+            display: inline-block;
+            width: 6px;
+            height: 6px;
+            background: var(--accent-primary);
+            margin-right: var(--space-sm);
+        }
+
+        /* ======================================
+           FOOTER
+           ====================================== */
+
+        footer {
+            border-top: 1px solid var(--border-subtle);
+            padding: var(--space-sm) var(--space-lg);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .page-number {
+            font-weight: 600;
+            color: var(--accent-secondary);
+        }
+
+        /* ======================================
+           HERO SECTION
+           ====================================== */
+
+        .hero-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: var(--space-lg);
+            padding: var(--space-lg);
+            background: linear-gradient(135deg, #051C2C 0%, #0A3A5C 100%);
+            color: #FFFFFF;
+        }
+
+        .hero-content h2 {
+            font-size: 24px;
+            font-weight: 700;
+            color: #FFFFFF;
+            margin-bottom: var(--space-sm);
+        }
+
+        .hero-content p {
+            color: rgba(255, 255, 255, 0.85);
+            font-size: 15px;
+            line-height: 1.6;
+        }
+
+        .hero-image img {
+            width: 100%;
+            height: auto;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .hero-meta {
+            display: flex;
+            gap: var(--space-md);
+            margin-top: var(--space-md);
+        }
+
+        .meta-item {
+            font-size: 13px;
+        }
+
+        .meta-label {
+            color: var(--accent-primary);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            font-size: 11px;
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        .meta-value {
+            color: #FFFFFF;
+        }
+
+        /* ======================================
+           KPI CARDS
+           ====================================== */
+
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: var(--space-sm);
+            margin: var(--space-md) 0;
+        }
+
+        .kpi-card {
+            background: var(--chart-bg);
+            border: 1px solid var(--border-subtle);
+            padding: var(--space-sm);
+            text-align: center;
+        }
+
+        .kpi-value {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--accent-secondary);
+            line-height: 1;
+            margin-bottom: 4px;
+        }
+
+        .kpi-label {
+            font-size: 11px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        @media (max-width: 768px) {
+            .kpi-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .hero-section {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* ======================================
+           PRINT STYLES
+           ====================================== */
+
+        @media print {
+            body {
+                background: white;
+            }
+
+            .slide-container {
+                box-shadow: none;
+                margin: 0;
+            }
+
+            .no-print {
+                display: none;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="slide-container">
+
+        <!-- HEADER -->
+        <header>
+            <div class="header-title">KUKA Connect Three | Projektdokumentation</div>
+            <div class="header-meta">Stand: 10. Januar 2026 | Status: Final</div>
+        </header>
+
+        <!-- HERO SECTION -->
+        <section class="hero-section">
+            <div class="hero-content">
+                <h2>Analyse und Implementierung einer automatisierten "Connect Three" Anwendung auf einem KUKA KRC4
+                    Industrieroboter</h2>
+                <p>Entwicklung einer robusten SoftwarelÃ¶sung fÃ¼r einen KUKA-Industrieroboter, der das Spiel "Connect
+                    Three" autonom gegen einen Menschen oder gegen sich selbst spielen kann.</p>
+                <div class="hero-meta">
+                    <div class="meta-item">
+                        <span class="meta-label">Projekt</span>
+                        <span class="meta-value">KUKA Connect Three</span>
+                    </div>
+                    <div class="meta-item">
+                        <span class="meta-label">Autoren</span>
+                        <span class="meta-value">Louis, Marius, Julius</span>
+                    </div>
+                    <div class="meta-item">
+                        <span class="meta-label">Steuerung</span>
+                        <span class="meta-value">KRC4</span>
+                    </div>
+                </div>
+            </div>
+            <div class="hero-image">
+                <img src="images/image4_roboter_setup.jpg" alt="KUKA Roboter mit Connect Three Spielfeld">
+            </div>
+        </section>
+
+        <!-- KPIs -->
+        <div class="content-section" style="padding-top: var(--space-md); padding-bottom: var(--space-md);">
+            <div class="kpi-grid">
+                <div class="kpi-card">
+                    <div class="kpi-value">3</div>
+                    <div class="kpi-label">Spielmodi</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-value">6Ã—4</div>
+                    <div class="kpi-label">Spielfeld Raster</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-value">4</div>
+                    <div class="kpi-label">Module</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-value">24</div>
+                    <div class="kpi-label">Spielsteine</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TABLE OF CONTENTS -->
+        <section class="content-section">
+            <div class="content-grid text-image">
+                <div class="toc">
+                    <div class="toc-title">Inhaltsverzeichnis</div>
+                    <ul>
+                        <li><a href="#k1">Einleitung und Aufgabenstellung</a></li>
+                        <li><a href="#k2">Systemanalyse und Entwurf</a></li>
+                        <li><a href="#k3">Implementierung und DetaillÃ¶sungen</a></li>
+                        <li><a href="#k4">Funktions- & Variablen-Referenz</a></li>
+                        <li><a href="#k5">QualitÃ¤tssicherung und Tests</a></li>
+                        <li><a href="#k6">Bedienungsanleitung</a></li>
+                        <li><a href="#k7">Video-Dokumentation</a></li>
+                        <li><a href="#k8">Fazit und Ausblick</a></li>
+                    </ul>
+                </div>
+                <div class="image-container">
+                    <img src="images/image5_spielmodus_dialog.jpg" alt="SmartPad Dialog zur Spielmodus-Auswahl">
+                    <div class="image-caption">Abb. 1: SmartPad Dialog zur Modus-Auswahl</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 1: EINLEITUNG -->
+        <section class="content-section" id="k1">
+            <div class="section-header">
+                <span class="section-number">Kapitel 01</span>
+                <span class="section-title">Einleitung und Aufgabenstellung</span>
+            </div>
+
+            <div class="content-grid text-image">
+                <div>
+                    <h3>Projektziel</h3>
+                    <p>Ziel dieses Projektes war die Entwicklung einer robusten SoftwarelÃ¶sung fÃ¼r einen
+                        KUKA-Industrieroboter (Steuerung KRC4), der in der Lage ist, das Spiel "Connect Three" autonom
+                        gegen einen Menschen oder gegen sich selbst zu spielen.</p>
+
+                    <div class="insight-box">
+                        <h4>Kernaussage</h4>
+                        <p>Das Projekt demonstriert die Interaktion zwischen komplexer High-Level-Logik (KI,
+                            Spielregeln) und Low-Level-Hardwaresteuerung (Kinematik, E/A-Signale).</p>
+                    </div>
+
+                    <h3>Anforderungen (Lastenheft)</h3>
+                    <p>GemÃ¤ÃŸ dem Lastenheft ("2023-03-06-IRL-HeB-E-O-1") mussten folgende funktionale Anforderungen
+                        erfÃ¼llt werden:</p>
+                    <ul>
+                        <li><strong>Spielfeld:</strong> Ein horizontales 6Ã—4-Raster mit physikalischen Magazinen fÃ¼r
+                            Rote und Blaue Steine.</li>
+                        <li><strong>Spielmodi:</strong> Drei Betriebsarten:
+                            <ol>
+                                <li>Mensch gegen Mensch (Roboter als "Dealer")</li>
+                                <li>Mensch gegen Roboter (Interaktives Spiel)</li>
+                                <li>Roboter gegen Roboter (Autonome Demonstration)</li>
+                            </ol>
+                        </li>
+                        <li><strong>SoftwarequalitÃ¤t:</strong> Modularer, dokumentierter und robuster Code.</li>
+                    </ul>
+                </div>
+                <div>
+                    <div class="image-container">
+                        <img src="images/image1_roboterposition.jpg" alt="KUKA Controller - Roboterposition Kartesisch">
+                        <div class="image-caption">Abb. 2: KRC4 Controller - Kartesische Roboterposition</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 2: SYSTEMANALYSE -->
+        <section class="content-section" id="k2">
+            <div class="section-header">
+                <span class="section-number">Kapitel 02</span>
+                <span class="section-title">Systemanalyse und Entwurf: Evolution der Architektur</span>
+            </div>
+
+            <h3>Von der Einzeldatei zur modularen LÃ¶sung</h3>
+            <p>In der frÃ¼hen Entwicklungsphase wurde das Programm zunÃ¤chst monolithisch strukturiert. Mit steigender
+                KomplexitÃ¤t â€“ insbesondere durch die EinfÃ¼hrung der drei Spielmodi und der KI â€“ zeigte sich, dass eine
+                Modularisierung signifikante Vorteile fÃ¼r die StabilitÃ¤t und Wartbarkeit bietet.</p>
+
+            <div class="content-grid three-col">
+                <div class="data-box">
+                    <div class="data-box-title">Kapselung</div>
+                    <p>Die Trennung von Logik (<code>GAME_CTRL</code>) und Bewegung (<code>ROBOT_MOTION</code>) erlaubt
+                        Tests ohne physische Roboterbewegung.</p>
+                </div>
+                <div class="data-box">
+                    <div class="data-box-title">Linker-Konflikte</div>
+                    <p>Durch Auslagerung in <code>GAME_DATA.dat</code> mit <code>PUBLIC</code> werden Zugriffskonflikte
+                        vermieden.</p>
+                </div>
+                <div class="data-box">
+                    <div class="data-box-title">Wiederverwendbarkeit</div>
+                    <p><code>ROBOT_MOTION</code> stellt generische Funktionen bereit, die von allen Spielmodi genutzt
+                        werden.</p>
+                </div>
+            </div>
+
+            <h3>Schichten-Architektur (Layer Model)</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Modul</th>
+                        <th>Rolle</th>
+                        <th>Verantwortung</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>MAIN.src</strong></td>
+                        <td>Controller</td>
+                        <td><strong>State Machine.</strong> Verwaltet Programmfluss, Initialisierung und Replay-Loop.
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><strong>GAME_CTRL.src</strong></td>
+                        <td>Model / Logic</td>
+                        <td><strong>Regelwerk & KI.</strong> EnthÃ¤lt virtuelles Spielbrett, berechnet ZÃ¼ge, prÃ¼ft
+                            Gewinner.</td>
+                    </tr>
+                    <tr>
+                        <td><strong>ROBOT_MOTION.src</strong></td>
+                        <td>View / Hardware</td>
+                        <td><strong>Aktorik.</strong> Setzt logische Befehle in physische Bahnplanung um.</td>
+                    </tr>
+                    <tr>
+                        <td><strong>GAME_DATA.dat</strong></td>
+                        <td>Database</td>
+                        <td><strong>Globale Daten.</strong> Zentraler Speicher fÃ¼r Konstanten und ZustÃ¤nde.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <!-- SECTION 3: IMPLEMENTIERUNG -->
+        <section class="content-section" id="k3">
+            <div class="section-header">
+                <span class="section-number">Kapitel 03</span>
+                <span class="section-title">Implementierung und DetaillÃ¶sungen</span>
+            </div>
+
+            <h3>Die Zentrale Steuerung (MAIN)</h3>
+            <p>Das Hauptprogramm implementiert eine robuste Schleife (<code>LOOP ... ENDLOOP</code>), die den
+                Produktionszyklus einer Roboterzelle simuliert.</p>
+
+            <pre><code>IF firstRun == TRUE THEN
+   ; Kapselung: Main weiÃŸ nicht, WIE gefragt wird, nur DASS gefragt wird.
+   skipSetup = ASK_SKIP_SETUP() 
+   
+   IF skipSetup == FALSE THEN
+      ROBOT_MOTION_SETUP() ; Hardware-Aufruf
+   ENDIF
+ENDIF</code></pre>
+
+            <div class="chart-container">
+                <div class="chart-title">Abbildung: Ablaufdiagramm Hauptprogramm (MAIN)</div>
+                <div class="mermaid">
+                    graph TD
+                    Start(("Start")) --> Init["Hardware Init ROBOT_MOTION"]
+                    Init --> CheckFirst{"Erster Start?"}
+                    CheckFirst -- Ja --> DialogSetup["Dialog: Lager gefÃ¼llt?"]
+                    DialogSetup -- Nein --> DoSetup["ROBOT_MOTION_SETUP"]
+                    DialogSetup -- Ja --> LogStart
+                    DoSetup --> LogStart["Markiere firstRun = FALSE"]
+                    CheckFirst -- Nein --> SelectMode
+                    LogStart --> SelectMode["SELECT_GAME_MODE"]
+                    SelectMode --> GameLoop["PLAY_GAME_LOOP"]
+                    GameLoop --> CheckWin{"Spiel Ende?"}
+                    CheckWin -- Ja --> DialogReplay["Dialog: Replay?"]
+                    DialogReplay -- Ja --> SelectMode
+                    DialogReplay -- Nein --> End(("Ende"))
+                </div>
+            </div>
+
+            <div class="content-grid text-image">
+                <div>
+                    <h3>Die Spielmodi & KI-Logik (GAME_CTRL)</h3>
+                    <p>Hier residiert die "Intelligenz". Die Boolesche Logik fÃ¼r den Spielmodus wurde in eine
+                        Integer-Logik Ã¼berfÃ¼hrt, um den RvR Modus zu ermÃ¶glichen.</p>
+
+                    <h4>Der Entscheidungsprozess</h4>
+                    <p>Bevor ein Zug ausgefÃ¼hrt werden kann, muss das System entscheiden, aus welcher Quelle der Zug
+                        stammt: Vom Touchpad (Mensch) oder vom Algorithmus (KI). Diese Weiche ist in
+                        <code>GET_PLAYER_MOVE</code> implementiert.</p>
+                </div>
+                <div class="image-container">
+                    <img src="images/image3_game_logic.jpg" alt="GAME_LOGIC Code im KRL Editor">
+                    <div class="image-caption">Abb. 3: GAME_LOGIC Implementierung im KRL Editor</div>
+                </div>
+            </div>
+
+            <div class="chart-container">
+                <div class="chart-title">Abbildung: Entscheidungslogik (GET_PLAYER_MOVE)</div>
+                <div class="mermaid">
+                    graph TD
+                    Start(("Start")) --> CheckMode{"Ist Modus RvR?"}
+                    CheckMode -- Ja --> SetRobot["Roboter ist dran"]
+                    CheckMode -- Nein --> CheckTurn{"Ist Spieler-Farbe dran?"}
+                    CheckTurn -- Ja --> HumanPath["Menschlicher Zug"]
+                    CheckTurn -- Nein --> RobotPath["KI Zug Gegner"]
+                    HumanPath --> Dialog["SmartPad Dialog: Spalte 1-6?"]
+                    RobotPath --> AI_Algo["KI Berechnung GET_AI_MOVE"]
+                    Dialog --> Valid{"Eingabe GÃ¼ltig?"}
+                    AI_Algo --> CalcGrav["Schwerkraft PrÃ¼fung"]
+                    Valid -- Nein --> ReturnErr["Fehler 0"]
+                    Valid -- Ja --> CalcGrav
+                    CalcGrav --> Free{"Zeile Frei?"}
+                    Free -- Ja --> ReturnRow["Return: Zeile und Spalte"]
+                    Free -- Nein --> ReturnErr
+                </div>
+            </div>
+
+            <h3>Kinematik & Bahnplanung (ROBOT_MOTION)</h3>
+            <p>Dieses Modul Ã¼bersetzt die abstrakte Anweisung <code>PERFORM_GAME_MOVE(row, col)</code> in reale
+                Weltkoordinaten. Es nutzt den Referenzpunkt <code>XP_FIELD_REF</code> und die SpaltenabstÃ¤nde
+                <code>DX_COL</code> / <code>DY_ROW</code>.</p>
+
+            <div class="content-grid">
+                <div class="chart-container">
+                    <div class="chart-title">Bewegungsablauf (PERFORM_GAME_MOVE)</div>
+                    <div class="mermaid">
+                        graph TD
+                        StartMove(("Start Move")) --> CalcPick["Berechne Lagerplatz"]
+                        CalcPick --> ApprPick["Anfahrt VorhÃ¶he Lager"]
+                        ApprPick --> Grip["Greifen und Rausziehen"]
+                        Grip --> CalcTarget["Berechne Ziel: P_FIELD r,c"]
+                        CalcTarget --> FrameCast["FRAME TRICK: fMove = pTarget"]
+                        FrameCast --> MoveHigh["PTP Ã¼ber Ziel fMove + Z"]
+                        MoveHigh --> MoveLow["LIN zum Ziel fMove"]
+                        MoveLow --> Open["Greifer AUF"]
+                        Open --> Retreat["LIN RÃ¼ckzug nach oben"]
+                        Retreat --> EndMove(("Ende"))
+                    </div>
+                </div>
+                <div class="image-container">
+                    <img src="images/image2_fehleranzeige.jpg" alt="Fehleranzeige GAME_LOGIC.ERR">
+                    <div class="image-caption">Abb. 4: Debug-Ansicht - Fehleranzeige wÃ¤hrend Entwicklung</div>
+                </div>
+            </div>
+
+            <h3>Technischer Exkurs: Das "Status & Turn" Problem</h3>
+            <div class="content-grid text-image">
+                <div>
+                    <h4>Das Problem</h4>
+                    <p>Eine KRL-Koordinate vom Typ <code>E6POS</code> enthÃ¤lt neben kartesischen Koordinaten (X, Y, Z)
+                        auch Achskonfigurationsdaten (<code>S</code>tatus und <code>T</code>urn).</p>
+                    <ul>
+                        <li><strong>Status:</strong> Informationen Ã¼ber die Lage des TCP</li>
+                        <li><strong>Turn:</strong> Vorzeichen der Achswinkel</li>
+                    </ul>
+                    <p>Berechnet man einen Punkt rein mathematisch, bleiben S und T erhalten. Wenn der neue Punkt eine
+                        andere Achsstellung erfordert: <strong>"Position unerreichbar"</strong>.</p>
+
+                    <h4>Die LÃ¶sung: Der "Frame-Trick"</h4>
+                    <p>Wir nutzen einen impliziten Cast auf den Datentyp <code>FRAME</code> (der S/T ignoriert).</p>
+                    <pre><code>DECL E6POS pTarget
+DECL FRAME fMove
+
+; 1. Zielpunkt holen
+pTarget = P_FIELD[row,col]
+
+; 2. Cast auf FRAME entfernt S und T
+fMove = pTarget 
+
+; 3. PTP: Steuerung berechnet Achswinkel neu
+PTP fMove</code></pre>
+                </div>
+                <div class="chart-container">
+                    <div class="chart-title">Setup-Routine (ROBOT_MOTION_SETUP)</div>
+                    <div class="mermaid">
+                        graph TD
+                        Start(("SETUP")) --> LoopRed["Schleife ROT 1..12"]
+                        LoopRed --> ApprRed["Anfahrt Magazin Rot"]
+                        ApprRed --> GripRed["Greifer ZU"]
+                        GripRed --> MoveStoreR["Fahre zu Lagerplatz"]
+                        MoveStoreR --> ReleaseRed["Greifer AUF"]
+                        ReleaseRed --> NextRed{"Alle 12?"}
+                        NextRed -- Nein --> LoopRed
+                        NextRed -- Ja --> LoopBlue["Schleife BLAU 1..12"]
+                        LoopBlue --> ApprBlue["Anfahrt Magazin Blau"]
+                        ApprBlue --> GripBlue["Greifer ZU"]
+                        GripBlue --> MoveStoreB["Fahre zu Lagerplatz"]
+                        MoveStoreB --> ReleaseBlue["Greifer AUF"]
+                        ReleaseBlue --> NextBlue{"Alle 12?"}
+                        NextBlue -- Nein --> LoopBlue
+                        NextBlue -- Ja --> Home["PTP HOME"]
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 4: REFERENZ -->
+        <section class="content-section" id="k4">
+            <div class="section-header">
+                <span class="section-number">Kapitel 04</span>
+                <span class="section-title">Funktions- & Variablen-Referenz</span>
+            </div>
+
+            <div class="content-grid">
+                <div>
+                    <h3>Globale Variablen (GAME_DATA.dat)</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Variable</th>
+                                <th>Typ</th>
+                                <th>Beschreibung</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><code>Board[4,6]</code></td>
+                                <td>INT</td>
+                                <td>2D-Array Spielzustand (0=Leer, 1=Rot, 2=Blau)</td>
+                            </tr>
+                            <tr>
+                                <td><code>GameMode</code></td>
+                                <td>INT</td>
+                                <td>Aktiver Modus (0=HvH, 1=HvR, 2=RvR)</td>
+                            </tr>
+                            <tr>
+                                <td><code>UsedRed</code></td>
+                                <td>INT</td>
+                                <td>ZÃ¤hler verbrauchte rote Steine</td>
+                            </tr>
+                            <tr>
+                                <td><code>UsedBlue</code></td>
+                                <td>INT</td>
+                                <td>ZÃ¤hler verbrauchte blaue Steine</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div>
+                    <h3>Wichtige Funktionen</h3>
+                    <div class="data-box">
+                        <div class="data-box-title">GAME_CTRL.src</div>
+                        <ul>
+                            <li><code>GET_AI_MOVE(myColor)</code> â€“ Gibt optimale Spalte (1-6) zurÃ¼ck</li>
+                            <li><code>GET_GRAVITY_ROW(col)</code> â€“ Simuliert Physik, iteriert von unten</li>
+                        </ul>
+                    </div>
+                    <div class="data-box">
+                        <div class="data-box-title">ROBOT_MOTION.src</div>
+                        <ul>
+                            <li><code>PERFORM_GAME_MOVE(row, col, player)</code> â€“ Zentraler Bewegungsblock</li>
+                            <li><code>ROBOT_MOTION_SETUP()</code> â€“ Initialisiert Steinlager</li>
+                            <li><code>CLEANUP_BOARD()</code> â€“ RÃ¤umt Spielfeld auf</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 5: TESTS -->
+        <section class="content-section" id="k5">
+            <div class="section-header">
+                <span class="section-number">Kapitel 05</span>
+                <span class="section-title">QualitÃ¤tssicherung und Tests</span>
+            </div>
+
+            <p>Validiert im Modus T1 (Handbetrieb) und AUT (Automatik).</p>
+
+            <div class="content-grid three-col">
+                <div class="data-box">
+                    <div class="data-box-title">KollisionsprÃ¼fung</div>
+                    <p>Kritischer Punkt: Eintauchen in Magazine. Parameter <code>APP_Z</code> auf 40.0mm justiert.</p>
+                </div>
+                <div class="data-box">
+                    <div class="data-box-title">Logik-Stress-Test</div>
+                    <p>Im Modus "RvR" wurden 5 Spiele in Folge ohne Eingriff durchgefÃ¼hrt â€“ stabile
+                        <code>UsedRed/UsedBlue</code> ZÃ¤hler.</p>
+                </div>
+                <div class="data-box">
+                    <div class="data-box-title">Gewinn-Validierung</div>
+                    <p>Alle 4 Richtungen (horizontal, vertikal, 2Ã— diagonal) wurden systematisch getestet.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 6: BEDIENUNG -->
+        <section class="content-section" id="k6">
+            <div class="section-header">
+                <span class="section-number">Kapitel 06</span>
+                <span class="section-title">Bedienungsanleitung</span>
+            </div>
+
+            <div class="content-grid text-image">
+                <div>
+                    <div class="data-box">
+                        <div class="data-box-title">Schritt 1</div>
+                        <p>Programm <code>MAIN</code> anwÃ¤hlen und Start drÃ¼cken.</p>
+                    </div>
+                    <div class="data-box">
+                        <div class="data-box-title">Schritt 2</div>
+                        <p>Setup-Frage <em>"Sind die Lager voll?"</em> wahrheitsgemÃ¤ÃŸ beantworten.</p>
+                    </div>
+                    <div class="data-box">
+                        <div class="data-box-title">Schritt 3</div>
+                        <p>Modus wÃ¤hlen: Mensch vs. Mensch, Mensch vs. Roboter, oder Demo RvR.</p>
+                    </div>
+                    <div class="data-box">
+                        <div class="data-box-title">Schritt 4</div>
+                        <p>Schwerkraft-Option auswÃ¤hlen (JA/NEIN) fÃ¼r realistische Spielphysik.</p>
+                    </div>
+                </div>
+                <div class="image-container">
+                    <img src="images/image5_spielmodus_dialog.jpg" alt="Spielmodus Dialog auf SmartPad">
+                    <div class="image-caption">Abb. 5: SmartPad Dialog â€“ Schwerkraft aktivieren</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 7: VIDEO -->
+        <section class="content-section" id="k7">
+            <div class="section-header">
+                <span class="section-number">Kapitel 07</span>
+                <span class="section-title">Video-Dokumentation</span>
+            </div>
+
+            <div class="video-section">
+                <!-- 
+                ===============================================================
+                HINWEIS: GOOGLE DRIVE VIDEO EMBED
+                
+                Um das Video einzubetten, ersetzen Sie den PLATZHALTER unten:
+                
+                1. Ã–ffnen Sie das Video in Google Drive
+                2. Klicken Sie auf die drei Punkte â†’ "In neuem Fenster Ã¶ffnen"
+                3. Im neuen Fenster: Drei Punkte â†’ "Element einbetten"
+                4. Kopieren Sie NUR die URL aus src="..."
+                5. Ersetzen Sie PLATZHALTER_FUER_DRIVE_EMBED_LINK unten
+                
+                Beispiel-Format der URL:
+                https://drive.google.com/file/d/FILE_ID/preview
+                ===============================================================
+                -->
+                <div class="video-container">
+                    <iframe src="https://drive.google.com/file/d/11IhQFTRbLN98H1OE9pHZy4h9QzOdAfaD/preview"
+                        allow="autoplay" allowfullscreen>
+                    </iframe>
+                </div>
+            </div>
+            <p style="margin-top: var(--space-sm); color: var(--text-muted); font-size: 13px;">
+                <strong>Video:</strong> Demonstration des KUKA Connect Three Systems im Automatik-Betrieb.
+            </p>
+        </section>
+
+        <!-- SECTION 8: FAZIT -->
+        <section class="content-section" id="k8">
+            <div class="section-header">
+                <span class="section-number">Kapitel 08</span>
+                <span class="section-title">Fazit und Ausblick</span>
+            </div>
+
+            <div class="insight-box">
+                <h4>Projektergebnis</h4>
+                <p>Das Projekt "KUKA Connect Three" erfÃ¼llt alle Anforderungen des Lastenhefts. Die modulare Architektur
+                    ermÃ¶glicht eine einfache Wartung und Erweiterung, wÃ¤hrend der "Frame-Trick" eine robuste Bahnplanung
+                    sicherstellt.</p>
+            </div>
+
+            <p>Das System demonstriert eindrucksvoll das Zusammenspiel von High-Level-Algorithmen und Low-Level-Robotik.
+                Die wichtigsten Erkenntnisse:</p>
+
+            <div class="content-grid three-col">
+                <div class="data-box">
+                    <div class="data-box-title">ModularitÃ¤t</div>
+                    <p>Trennung von Logik und Hardware ermÃ¶glicht unabhÃ¤ngige Tests und Wartung.</p>
+                </div>
+                <div class="data-box">
+                    <div class="data-box-title">Robustheit</div>
+                    <p>Der Frame-Trick lÃ¶st das Status/Turn-Problem elegant und zuverlÃ¤ssig.</p>
+                </div>
+                <div class="data-box">
+                    <div class="data-box-title">Skalierbarkeit</div>
+                    <p>Die Architektur erlaubt einfache Erweiterung auf grÃ¶ÃŸere Spielfelder oder komplexere KI.</p>
+                </div>
+            </div>
+
+            <!-- IMAGE GALLERY -->
+            <h3 style="margin-top: var(--space-lg);">Bildergalerie: Entwicklungsprozess</h3>
+            <div class="image-grid">
+                <div class="image-container">
+                    <img src="images/image1_roboterposition.jpg" alt="Roboterposition Anzeige">
+                    <div class="image-caption">Kartesische Position</div>
+                </div>
+                <div class="image-container">
+                    <img src="images/image2_fehleranzeige.jpg" alt="Fehleranzeige">
+                    <div class="image-caption">Debug-Prozess</div>
+                </div>
+                <div class="image-container">
+                    <img src="images/image3_game_logic.jpg" alt="Game Logic Code">
+                    <div class="image-caption">KRL Code Editor</div>
+                </div>
+                <div class="image-container">
+                    <img src="images/image4_roboter_setup.jpg" alt="Roboter Setup">
+                    <div class="image-caption">Hardware Setup</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- FOOTER -->
+        <footer>
+            <div>Â© 2026 Louis, Marius, Julius | KUKA Connect Three Projektdokumentation</div>
+            <div class="page-number">Hochschule Karlsruhe</div>
+        </footer>
+
+    </div>
+
+</body>
+
+</html>
+

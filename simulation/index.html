@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KUKA Robot - Connect 3 Simulation</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+    <div id="app">
+        <!-- 3D Canvas -->
+        <canvas id="scene"></canvas>
+
+        <!-- Game UI Overlay -->
+        <div id="ui-overlay">
+            <!-- Header -->
+            <header class="glass-panel">
+                <h1>🤖 KUKA Connect 3</h1>
+                <p id="status-text">Wähle einen Spielmodus</p>
+            </header>
+
+            <!-- Game Mode Selection -->
+            <div id="mode-selection" class="glass-panel">
+                <h2>Spielmodus</h2>
+                <div class="button-group">
+                    <button id="btn-hvh" class="mode-btn">
+                        <span class="icon">👤👤</span>
+                        <span>Mensch vs. Mensch</span>
+                    </button>
+                    <button id="btn-hvr" class="mode-btn">
+                        <span class="icon">👤🤖</span>
+                        <span>Mensch vs. Roboter</span>
+                    </button>
+                    <button id="btn-rvr" class="mode-btn">
+                        <span class="icon">🤖🤖</span>
+                        <span>Roboter Demo</span>
+                    </button>
+                </div>
+
+                <div class="options">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="gravity-mode" checked>
+                        <span>Schwerkraft aktiviert</span>
+                    </label>
+                </div>
+
+                <button id="btn-start" class="primary-btn">Spiel starten</button>
+            </div>
+
+            <!-- Game Controls -->
+            <div id="game-controls" class="glass-panel hidden">
+                <h2 id="current-player">Rot ist am Zug</h2>
+                <div id="column-buttons" class="column-grid">
+                    <button class="col-btn" data-col="1">1</button>
+                    <button class="col-btn" data-col="2">2</button>
+                    <button class="col-btn" data-col="3">3</button>
+                    <button class="col-btn" data-col="4">4</button>
+                    <button class="col-btn" data-col="5">5</button>
+                    <button class="col-btn" data-col="6">6</button>
+                </div>
+                <button id="btn-new-game" class="secondary-btn">Neues Spiel</button>
+            </div>
+
+            <!-- Winner Announcement -->
+            <div id="winner-panel" class="glass-panel hidden">
+                <h2 id="winner-text">🎉 Gewonnen!</h2>
+                <button id="btn-play-again" class="primary-btn">Nochmal spielen</button>
+            </div>
+        </div>
+
+        <!-- Camera Controls Info -->
+        <div id="camera-info" class="glass-panel small">
+            <span>🖱️ Maus: Kamera drehen | Scroll: Zoom</span>
+        </div>
+    </div>
+
+    <!-- Three.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+
+    <!-- Game Scripts -->
+    <script src="game.js"></script>
+    <script src="robot.js"></script>
+    <script src="board.js"></script>
+    <script src="main.js"></script>
+</body>
+
+</html>

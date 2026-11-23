@@ -1,0 +1,37 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+.env
+*.egg-info/
+pip-log.txt
+.pytest_cache/
+
+# Virtual envs & OS
+.DS_Store
+Thumbs.db
+*.log
+*.tmp
+
+# Simulator / Flask
+instance/
+*.pyc
+
+# KRL - keep sources, ignore controller copies
+*.bak
+KRC_backup/
+
+# Videos - large binaries via Release, not in main history
+# Uncomment to ignore the full 92MB MP4 locally:
+# docs/videos/*.mp4
+# docs/videos/*.avi
+# docs/videos/*.mov
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~

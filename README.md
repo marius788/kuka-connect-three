@@ -10,7 +10,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-green?style=flat-square)](LICENSE)
 [![HKA](https://img.shields.io/badge/Hochschule-Karlsruhe-red?style=flat-square)]()
 
-**Hochschule Karlsruhe (HKA) — Robotics Lab · Winter 2025/26** · Louis · Marius Keck · Julius
+**Hochschule Karlsruhe (HKA) — Fakultät Wirtschaftswissenschaften · Wirtschaftsingenieurwesen · Robotics Lab · WS 2025/26** · Louis · Marius Keck · Julius
 
 ---
 
@@ -30,18 +30,40 @@
 
 ## 📸 Gallery & Demo
 
-### 🎥 Demo Video
+### 🎥 Demo Video — Real KUKA KRC4 Cell
 
-> Full game + cleanup on the real KUKA cell. Click to play.
+<p align="center">
+  <a href="https://github.com/marius788/kuka-connect-three/releases/download/v1.0/kuka-demo.mp4">
+    <img src="docs/images/image4_roboter_setup.jpg" width="85%" alt="KUKA Connect Three — Demo on real cell" style="border-radius:12px; border:1px solid #E0E0E0; box-shadow:0 4px 24px rgba(5,28,44,0.08);">
+  </a>
+</p>
+<p align="center">
+  <em>Full autonomous game + cleanup — 6×4 board, gravity mode, 12 red + 12 blue stones, SmartPad dialogs. Click the image to play/download (92&nbsp;MB MP4, no login required).</em>
+</p>
 
-[![Demo Thumbnail](docs/images/image4_roboter_setup.jpg)](https://drive.google.com/file/d/11IhQFTRbLN98H1OE9pHZy4h9QzOdAfaD/preview)
+<p align="center">
+  <a href="https://github.com/marius788/kuka-connect-three/releases/download/v1.0/kuka-demo.mp4"><img src="https://img.shields.io/badge/▶_Download_Demo-92_MB_MP4-red?style=for-the-badge" alt="Download Demo"></a>
+  <a href="https://drive.google.com/file/d/11IhQFTRbLN98H1OE9pHZy4h9QzOdAfaD/preview"><img src="https://img.shields.io/badge/Drive-Mirror-4285F4?style=for-the-badge&logo=googledrive&logoColor=white" alt="Drive Mirror"></a>
+  <a href="docs/Dokumentation_V2.html"><img src="https://img.shields.io/badge/Docs-Dokumentation-051C2C?style=for-the-badge" alt="Docs"></a>
+</p>
 
-- **GitHub Release (92 MB, no login):** [▶️ Download KUKA-Connect-Three-Demo.mp4](https://github.com/marius788/kuka-connect-three/releases/download/v1.0/KUKA-Connect-Three-Demo.mp4) · [Releases page](https://github.com/marius788/kuka-connect-three/releases) — also embedded in [`docs/Dokumentation_V2.html`](docs/Dokumentation_V2.html)
-- **Mirror (Drive):** [▶️ Watch on Drive](https://drive.google.com/file/d/11IhQFTRbLN98H1OE9pHZy4h9QzOdAfaD/preview)
-- **Local preview:** `Video Demo.jpg` · full MP4 in `docs/videos/` (see [docs/videos/README.md](docs/videos/README.md) for YouTube upload guide)
-- **Recommended for portfolio:** Upload to YouTube as *unlisted* and replace the Drive link — README is ready for `youtube-nocookie.com/embed/...`
+> **No YouTube yet?** The Drive link is a 1-click preview (`/preview` embed). For LinkedIn/portfolio, upload to YouTube as *unlisted* and replace the image link with `https://www.youtube-nocookie.com/embed/YOUR_ID` — see `docs/videos/README.md`.
 
-> **Tip for recruiters:** Search *"kuka connect three demo"* or open `docs/videos/demo.mp4` after release.
+<details>
+<summary><b>📖 Video details & alternative playback</b></summary>
+
+- **Source:** `Video von marius keck` (original 92 MB MP4, `00 00 00 18` MP4, H.264) — recorded on the HKA KRC4 cell in AUT mode
+- **Also embedded in:** [`docs/Dokumentation_V2.html`](docs/Dokumentation_V2.html) via Drive iframe, plus thumbnail `assets/images/Video Demo.jpg`
+- **Direct HTML5 (try in browser):**
+  ```html
+  <video controls poster="docs/images/image4_roboter_setup.jpg" width="100%">
+    <source src="https://github.com/marius788/kuka-connect-three/releases/download/v1.0/kuka-demo.mp4" type="video/mp4">
+  </video>
+  ```
+  GitHub README sanitizes some `<video>` tags — the **image-link above is the reliable fallback** and works everywhere (GitHub, LinkedIn, PDF export).
+- **YouTube guide:** `docs/videos/README.md` → upload → replace href.
+
+</details>
 
 ### 🖼️ Hardware Impressions
 
@@ -313,9 +335,9 @@ This project covers the **full robotics stack** — not just code:
 
 ## 👥 Authors & Credits
 
-**Louis · Marius Keck · Julius** — Hochschule Karlsruhe, Faculty of Mechanical Engineering / Mechatronics
+**Louis · Marius Keck · Julius** — Hochschule Karlsruhe (HKA), Fakultät Wirtschaftswissenschaften · Wirtschaftsingenieurwesen (Industrial Engineering)
 
-- Course: *IRL — Industrial Robotics Lab* (Prof. Hein / Prof. Wurll)
+- Course: *IRL — Industrial Robotics Lab* (Prof. Hein / Prof. Wurll) — cross-faculty robotics elective
 - KRC4 cell, KUKA KR 6-axis, electric gripper ($OUT 7/8)
 - Special thanks to the HKA robotics lab staff for cell access & safety briefings
 

@@ -44,26 +44,8 @@
 <p align="center">
   <a href="https://github.com/marius788/kuka-connect-three/releases/download/v1.0/kuka-demo.mp4"><img src="https://img.shields.io/badge/▶_Download_Demo-92_MB_MP4-red?style=for-the-badge" alt="Download Demo"></a>
   <a href="https://drive.google.com/file/d/11IhQFTRbLN98H1OE9pHZy4h9QzOdAfaD/preview"><img src="https://img.shields.io/badge/Drive-Mirror-4285F4?style=for-the-badge&logo=googledrive&logoColor=white" alt="Drive Mirror"></a>
-  <a href="docs/Dokumentation_V2.html"><img src="https://img.shields.io/badge/Docs-Dokumentation-051C2C?style=for-the-badge" alt="Docs"></a>
+  <a href="https://github.com/marius788/kuka-connect-three/releases"><img src="https://img.shields.io/badge/Releases-v1.0-051C2C?style=for-the-badge" alt="Releases"></a>
 </p>
-
-> **No YouTube yet?** The Drive link is a 1-click preview (`/preview` embed). For LinkedIn/portfolio, upload to YouTube as *unlisted* and replace the image link with `https://www.youtube-nocookie.com/embed/YOUR_ID` — see `docs/videos/README.md`.
-
-<details>
-<summary><b>📖 Video details & alternative playback</b></summary>
-
-- **Source:** `Video von marius keck` (original 92 MB MP4, `00 00 00 18` MP4, H.264) — recorded on the HKA KRC4 cell in AUT mode
-- **Also embedded in:** [`docs/Dokumentation_V2.html`](docs/Dokumentation_V2.html) via Drive iframe, plus thumbnail `assets/images/Video Demo.jpg`
-- **Direct HTML5 (try in browser):**
-  ```html
-  <video controls poster="docs/images/image4_roboter_setup.jpg" width="100%">
-    <source src="https://github.com/marius788/kuka-connect-three/releases/download/v1.0/kuka-demo.mp4" type="video/mp4">
-  </video>
-  ```
-  GitHub README sanitizes some `<video>` tags — the **image-link above is the reliable fallback** and works everywhere (GitHub, LinkedIn, PDF export).
-- **YouTube guide:** `docs/videos/README.md` → upload → replace href.
-
-</details>
 
 ### 🖼️ Hardware Impressions
 
@@ -83,7 +65,7 @@ More field photos: [`assets/images/`](assets/images/) (IMG_*, PXL_*)
 
 ## 🎮 Spiel & Regelwerk — Fokus: Code & Modi
 
-Spec: [`AUFGABE.pdf`](docs/AUFGABE.pdf) / [`Lastenheft`](docs/2023-03-06-IRL-HeB-E-O-1-Lastenheft.pdf)
+Spec: Lastenheft *2023-03-06-IRL-HeB-E-O-1* (intern)
 
 - **Board:** 6 Spalten × 4 Reihen (6×4, horizontal; Spec zeigt vertikal) — 12 rote + 12 blaue Steine, 2 Magazine, Base-kalibriert (`BASE_DATA[14]`)
 - **Ziel:** Erster mit **3 in Reihe** gewinnt (horizontal, vertikal, diagonal, `CHECK_WINNER` prüft alle 4 Richtungen)
@@ -222,7 +204,7 @@ Frontend `simulator/static/` — `index.html` + `robot_renderer.js` (Three.js Ar
 kuka-connect-three/
 ├── README.md                          # ← you are here
 ├── LICENSE
-├── requirements.txt                   # Flask + CORS + NumPy
+├── requirements.txt
 ├── krl/                               # KUKA KRL — deploy to KRC4 via WorkVisual / USB
 │   ├── MAIN.src / .dat                # State machine & game loop
 │   ├── GAME_CTRL.src / .dat           # Board, AI, dialogs
@@ -231,25 +213,15 @@ kuka-connect-three/
 │   ├── GAME_DATA_V2.dat               # Variant
 │   ├── GAME_LOGIC_LEGACY.*            # Monolithic predecessor (reference)
 │   └── ROBOT_MOTION_V2.src            # Alt motion variant
-├── simulator/                         # Digital twin (Python ↔ KRL)
+├── simulator/                         # Lightweight preview (Python ↔ KRL)
 │   ├── app.py                         # Flask server + REST API
 │   ├── game_logic.py                  # KRL→Python: CHECK_WINNER, GET_AI_MOVE, gravity
 │   ├── robot_motion.py                # KRL→Python: PTP/LIN sequences, pick/place math
-│   └── static/
-│       ├── index.html
-│       ├── css/style.css
-│       └── js/{main.js, robot_renderer.js}
-├── simulation/                        # Alt JS-only simulation (standalone)
+│   └── static/                        # Three.js preview (one image in appendix)
+├── simulation/                        # Alt JS-only preview
 ├── docs/
-│   ├── AUFGABE.pdf                    # Task spec (German)
-│   ├── 2023-03-06-IRL-HeB-E-O-1-Lastenheft.pdf
-│   ├── Dokumentation_V2.html          # Full technical doc (McKinsey-style, with Mermaid)
-│   ├── Bachelor_Arbeit_Final.html     # Thesis-style version
-│   ├── Praesentation_KUKA_Connect_Three.html  # Reveal.js slides
-│   ├── Code_Review.html
-│   ├── images/                        # 5 SmartPad/Hardware shots + workspace
-│   └── videos/
-│       └── README.md                  # Video links & YouTube guide
+│   ├── images/                        # Hardware shots + workspace
+│   └── videos/                        # Demo video links
 ├── assets/
 │   └── images/                        # Field photos (IMG_*, PXL_*)
 └── .gitignore
@@ -316,13 +288,10 @@ This project covers the **full robotics stack** — not just code:
 
 ---
 
-## 📄 Full Documentation
+## 📄 Code & Resources
 
-- **Technical doc (best for deep dive):** [`docs/Dokumentation_V2.html`](docs/Dokumentation_V2.html) — McKinsey-style, Mermaid diagrams, FRAME-Trick explainer
-- **Thesis-style:** [`docs/Bachelor_Arbeit_Final.html`](docs/Bachelor_Arbeit_Final.html)
-- **Slides:** [`docs/Praesentation_KUKA_Connect_Three.html`](docs/Praesentation_KUKA_Connect_Three.html) (Reveal.js)
-- **Spec:** [`docs/AUFGABE.pdf`](docs/AUFGABE.pdf) + Lastenheft
-- **Simulator quick start:** [`simulator/app.py`](simulator/app.py)
+- **KRL core:** [`krl/MAIN.src`](krl/MAIN.src) · [`krl/GAME_CTRL.src`](krl/GAME_CTRL.src) · [`krl/ROBOT_MOTION.src`](krl/ROBOT_MOTION.src) · [`krl/GAME_DATA.dat`](krl/GAME_DATA.dat)
+- **Simulator preview:** [`simulator/app.py`](simulator/app.py) (`python simulator/app.py` → http://localhost:5000)
 
 ---
 

@@ -1,4 +1,4 @@
-# 🤖 KUKA Connect Three — Autonomous Game on KRC4
+﻿# 🤖 KUKA Connect Three — Autonomous Game on KRC4
 
 > **Industrial robotics meets game AI.** A complete KUKA KRC4 application where a 6-axis industrial robot plays *Connect Three* — against a human or against itself — with modular KRL architecture, real-time kinematics, and a browser-based 3D digital twin.
 
@@ -36,7 +36,8 @@
 
 [![Demo Thumbnail](docs/images/image4_roboter_setup.jpg)](https://drive.google.com/file/d/11IhQFTRbLN98H1OE9pHZy4h9QzOdAfaD/preview)
 
-- **Google Drive (original, 92 MB):** [▶️ Watch full video](https://drive.google.com/file/d/11IhQFTRbLN98H1OE9pHZy4h9QzOdAfaD/preview) — also embedded in [`docs/Dokumentation_V2.html`](docs/Dokumentation_V2.html)
+- **GitHub Release (92 MB, no login):** [▶️ Download KUKA-Connect-Three-Demo.mp4](https://github.com/marius788/kuka-connect-three/releases/download/v1.0/KUKA-Connect-Three-Demo.mp4) · [Releases page](https://github.com/marius788/kuka-connect-three/releases) — also embedded in [`docs/Dokumentation_V2.html`](docs/Dokumentation_V2.html)
+- **Mirror (Drive):** [▶️ Watch on Drive](https://drive.google.com/file/d/11IhQFTRbLN98H1OE9pHZy4h9QzOdAfaD/preview)
 - **Local preview:** `Video Demo.jpg` · full MP4 in `docs/videos/` (see [docs/videos/README.md](docs/videos/README.md) for YouTube upload guide)
 - **Recommended for portfolio:** Upload to YouTube as *unlisted* and replace the Drive link — README is ready for `youtube-nocookie.com/embed/...`
 
@@ -331,3 +332,4 @@ MIT — see [LICENSE](LICENSE). KUKA® and KRC4® are trademarks of KUKA AG. Thi
 This repo is built to be **recruiter- and peer-readable**: every design decision is explained, not just shown. If you use the FRAME Trick or the simulator pattern, a star or citation is appreciated.
 
 **Open to collaboration on vision/ROS extensions — PRs welcome.**
+

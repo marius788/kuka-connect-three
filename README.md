@@ -187,14 +187,14 @@ PLAY_GAME_LOOP: GET_PLAYER_MOVE → PERFORM_GAME_MOVE → UPDATE_BOARD → CHECK
 
 ---
 
-## 🖥️ Anhang: Simulation (leichtes Preview — nicht Fokus)
+## 🖥️ Anhang: Simulation — optionales Preview
 
-*Dieses Repo ist primär **KRL-Robotercode**. Die Simulation ist nur ein kleines Preview zum Testen der Logik ohne Hardware — ein Bild reicht.*
+Der Schwerpunkt dieses Repositories liegt auf dem **KRL-Robotercode** (`krl/`). Die Simulation in `simulator/` ist als leichtgewichtiges Preview zur Validierung der Spiellogik ohne Hardware ergänzt — bewusst kompakt gehalten.
 
 <p align="center">
   <img src="docs/images/robot_workspace.png" width="60%" alt="Simulator Preview — workspace & teach points" style="border:1px solid #E0E0E0; border-radius:8px;">
 </p>
-<p align="center"><em>Preview der 3D-Simulation (Three.js + Flask) — 1:1 Übersetzung von <code>CHECK_WINNER</code> & <code>GET_AI_MOVE</code> nach Python. Zum Ausprobieren:</em></p>
+<p align="center"><em>3D-Preview (Three.js + Flask) — 1:1-Übersetzung von <code>CHECK_WINNER</code> & <code>GET_AI_MOVE</code> nach Python zum Testen ohne Hardware:</em></p>
 
 ```bash
 python -m venv .venv; .venv\Scripts\activate; pip install -r requirements.txt; python simulator/app.py
